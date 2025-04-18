@@ -563,4 +563,4 @@ function setupRealTimeListeners() {
       .where('status', '==', 'pending')
       .onSnapshot(() => loadLoanRequests());
   }
-      }
+}
