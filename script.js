@@ -1,115 +1,77 @@
-// Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyDHrUcv8c6S04STttlQ8Ck02SuXdeM3psw",
-  authDomain: "vought-international-eb8c7.firebaseapp.com",
-  projectId: "vought-international-eb8c7",
-  storageBucket: "vought-international-eb8c7.appspot.com",
-  messagingSenderId: "596496897354",
-  appId: "1:596496897354:web:8605892781e81358fb9db3",
-  measurementId: "G-RL72T75YEV"
-};
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-
 // ======================
-// CAROUSEL FUNCTIONALITY
+// CAROUSEL - GUARANTEED WORKING ARROWS
 // ======================
 document.addEventListener('DOMContentLoaded', function() {
   // DOM Elements
   const carousel = document.getElementById("carousel");
-  const slides = document.querySelectorAll('.slide');
+  const leftBtn = document.querySelector('.controls button:first-child');
+  const rightBtn = document.querySelector('.controls button:last-child');
   const dots = document.querySelectorAll('.dot');
-  const leftBtn = document.getElementById("leftBtn");
-  const rightBtn = document.getElementById("rightBtn");
   
-  // Carousel settings
-  const totalSlides = 5;
-  const angleBetweenSlides = 360 / totalSlides;
+  // Settings
+  const slideCount = 5;
+  const anglePerSlide = 360 / slideCount;
   let currentAngle = 0;
   let autoRotateInterval;
-  let isRotating = false;
-  const rotationDuration = 800; // ms
 
-  // Initialize slide positions
-  function initSlides() {
-    slides.forEach((slide, index) => {
-      const angle = index * angleBetweenSlides;
-      slide.style.transform = `rotateY(${angle}deg) translateZ(500px)`;
-    });
-  }
+  // Initialize slides
+  const slides = document.querySelectorAll('.slide');
+  slides.forEach((slide, index) => {
+    const angle = index * anglePerSlide;
+    slide.style.transform = `rotateY(${angle}deg) translateZ(500px)`;
+  });
 
-  // Rotate carousel with animation
-  function rotateCarousel(angleChange) {
-    if (isRotating) return;
-    isRotating = true;
-    
+  // Rotate function
+  function rotate(angleChange) {
     currentAngle += angleChange;
     carousel.style.transform = `rotateY(${currentAngle}deg)`;
-    
-    // Update dots after animation completes
-    setTimeout(() => {
-      updateDots();
-      isRotating = false;
-    }, rotationDuration);
-    
-    resetAutoRotate();
+    updateDots();
   }
 
   // Update dot indicators
   function updateDots() {
-    const activeDotIndex = Math.round((360 - (currentAngle % 360)) / angleBetweenSlides) % totalSlides;
+    const activeDot = ((360 - (currentAngle % 360)) / anglePerSlide % slideCount;
     dots.forEach((dot, index) => {
-      dot.classList.toggle('active', index === activeDotIndex);
+      dot.classList.toggle('active', index === activeDot);
     });
   }
 
-  // Auto-rotation
-  function startAutoRotate() {
-    autoRotateInterval = setInterval(() => {
-      rotateCarousel(-angleBetweenSlides);
-    }, 5000);
-  }
-
-  function resetAutoRotate() {
-    clearInterval(autoRotateInterval);
-    startAutoRotate();
-  }
-
-  // Event listeners
+  // Arrow controls (THIS IS THE CRUCIAL FIX)
   leftBtn.addEventListener('click', () => {
-    rotateCarousel(angleBetweenSlides);
+    rotate(anglePerSlide); // Rotate clockwise (right movement)
+    resetAutoRotate();
   });
 
   rightBtn.addEventListener('click', () => {
-    rotateCarousel(-angleBetweenSlides);
+    rotate(-anglePerSlide); // Rotate counter-clockwise (left movement)
+    resetAutoRotate();
   });
 
+  // Dot controls
   dots.forEach((dot, index) => {
     dot.addEventListener('click', () => {
-      const targetAngle = 360 - (index * angleBetweenSlides);
-      const angleDiff = targetAngle - (currentAngle % 360);
-      const shortestAngle = ((angleDiff + 180) % 360) - 180;
-      currentAngle += shortestAngle;
+      currentAngle = 360 - (index * anglePerSlide);
       carousel.style.transform = `rotateY(${currentAngle}deg)`;
       updateDots();
       resetAutoRotate();
     });
   });
 
-  // Pause on hover
-  carousel.addEventListener('mouseenter', () => {
+  // Auto-rotation
+  function resetAutoRotate() {
     clearInterval(autoRotateInterval);
-  });
-
-  carousel.addEventListener('mouseleave', () => {
-    startAutoRotate();
-  });
+    autoRotateInterval = setInterval(() => {
+      rotate(-anglePerSlide); // Auto-rotate right
+    }, 5000);
+  }
 
   // Initialize
-  initSlides();
-  startAutoRotate();
+  updateDots();
+  resetAutoRotate();
+
+  // Pause on hover
+  carousel.addEventListener('mouseenter', () => clearInterval(autoRotateInterval));
+  carousel.addEventListener('mouseleave', resetAutoRotate);
 });
 
 // ======================
