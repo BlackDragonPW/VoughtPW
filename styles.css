@@ -531,3 +531,29 @@ body {
 .status-pending {
   color: #FFC107;
 }
+
+/* Add to your existing styles */
+.remember-me {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.remember-me input {
+  width: auto;
+  margin: 0;
+}
+
+.remember-me label {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.error-message {
+  color: var(--secondary);
+  min-height: 20px;
+  text-align: center;
+  margin: 10px 0;
+  display: none;
+}
