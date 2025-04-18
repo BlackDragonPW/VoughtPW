@@ -52,8 +52,8 @@ updateDots();
 const authOverlay = document.getElementById('authOverlay');
 const joinNowBtn = document.getElementById('joinNowBtn');
 const closeAuth = document.getElementById('closeAuth');
-const tokenBtn = document.getElementById('tokenBtn');
-const tokenStatus = document.getElementById('tokenStatus');
+const loginBtn = document.getElementById('loginBtn');
+const loginStatus = document.getElementById('loginStatus');
 
 // Show auth overlay
 joinNowBtn.addEventListener('click', () => {
@@ -67,26 +67,32 @@ closeAuth.addEventListener('click', () => {
   authOverlay.classList.remove('active');
 });
 
-// Token verification
-tokenBtn.addEventListener('click', () => {
-  const token = document.getElementById('accessToken').value;
+// Login functionality
+loginBtn.addEventListener('click', () => {
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
   
-  if(!token) {
-    tokenStatus.textContent = 'Please enter your access token';
-    tokenStatus.className = 'status-message error';
+  if(!email || !password) {
+    loginStatus.textContent = 'Please fill in all fields';
+    loginStatus.className = 'status-message error';
     return;
   }
   
-  // Here you would normally verify the token with Firebase
-  // For now we'll simulate a successful verification
-  tokenStatus.textContent = 'Token verified! Redirecting...';
-  tokenStatus.className = 'status-message success';
-  
-  // Simulate redirect after verification
-  setTimeout(() => {
-    tokenStatus.textContent = 'Redirecting to member portal...';
-    // In a real implementation, you would redirect or show member content
-  }, 1500);
+  // Here you would normally verify the credentials with Firebase
+  // For now we'll simulate a successful login
+  if(email.endsWith('@vought.com')) {
+    loginStatus.textContent = 'Login successful! Redirecting...';
+    loginStatus.className = 'status-message success';
+    
+    // Simulate redirect after login
+    setTimeout(() => {
+      loginStatus.textContent = 'Redirecting to member portal...';
+      // In a real implementation, you would redirect or show member content
+    }, 1500);
+  } else {
+    loginStatus.textContent = 'Only vought.com emails are allowed';
+    loginStatus.className = 'status-message error';
+  }
 });
 
 // Close overlay when clicking outside the auth card
