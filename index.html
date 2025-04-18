@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Vought International</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="scene">
+  <div class="carousel" id="carousel">
+    <!-- Slide 1 -->
+    <div class="slide" style="transform: rotateY(0deg) translateZ(500px);">
+      <div>
+        <div class="logo">
+          <i class="fas fa-dragon"></i>
+          <span>Vought International</span>
+        </div>
+        <h2>We saw potential in you</h2>
+        <p>Join <strong>Vought</strong>, the new micro with veteran Gov. Ditch the old nano!</p>
+      </div>
+      <div class="link-container">
+        <a href="https://politicsandwar.com/alliance/id=13410" class="link" target="_blank">
+          <i class="fas fa-globe"></i>
+          P&W Page
+        </a>
+      </div>
+    </div>
+    <!-- Slide 2 -->
+    <div class="slide" style="transform: rotateY(72deg) translateZ(500px);">
+      <div>
+        <div class="logo">
+          <i class="fas fa-star"></i>
+          <span>Elite Alliance</span>
+        </div>
+        <h2>Risen from The Wei</h2>
+        <p>We're creating a new elite alliance for the best of the best.</p>
+      </div>
+    </div>
+    <!-- Slide 3 -->
+    <div class="slide" style="transform: rotateY(144deg) translateZ(500px);">
+      <div>
+        <div class="logo">
+          <i class="fas fa-trophy"></i>
+          <span>Why Join Us?</span>
+        </div>
+        <h2>Member Benefits</h2>
+        <ul>
+          <li>Optional Taxes</li>
+          <li>Veteran Members</li>
+          <li>Active Protection</li>
+          <li>Noob Friendly</li>
+          <li>Fast Growth Grants</li>
+        </ul>
+      </div>
+    </div>
+    <!-- Slide 4 -->
+    <div class="slide" style="transform: rotateY(216deg) translateZ(500px);">
+      <div>
+        <div class="logo">
+          <i class="fas fa-shield-alt"></i>
+          <span>Our Policies</span>
+        </div>
+        <h2>Alliance Rules</h2>
+        <ul>
+          <li>Raid Policy: Chill</li>
+          <li>Peaceful Growth (for now)</li>
+          <li>Recruiting Elite Nations</li>
+          <li>Sincerely, Ianoo (not Lanoo)</li>
+        </ul>
+      </div>
+      <div class="link-container">
+        <a href="https://discord.gg/5zkUhpFUBt" class="link" target="_blank">
+          <i class="fab fa-discord"></i>
+          Discord
+        </a>
+        <a href="https://blackdragonpw.github.io/VoughtInternational/" class="link" target="_blank">
+          <i class="fas fa-link"></i>
+          Website
+        </a>
+      </div>
+    </div>
+    <!-- Slide 5 -->
+    <div class="slide" style="transform: rotateY(288deg) translateZ(500px);">
+      <div>
+        <div class="logo">
+          <i class="fas fa-user-plus"></i>
+          <span>Get Started</span>
+        </div>
+        <h2>Ready to Join?</h2>
+        <p>Become part of our growing community today.</p>
+        <button class="join-button" id="joinNowBtn">
+          <i class="fas fa-sign-in-alt"></i>
+          Access Portal
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dot indicators -->
+  <div class="dots" id="dots">
+    <div class="dot active" onclick="rotateToSlide(0)"></div>
+    <div class="dot" onclick="rotateToSlide(1)"></div>
+    <div class="dot" onclick="rotateToSlide(2)"></div>
+    <div class="dot" onclick="rotateToSlide(3)"></div>
+    <div class="dot" onclick="rotateToSlide(4)"></div>
+  </div>
+
+  <!-- Controls (Buttons) -->
+  <div class="controls">
+    <button onclick="rotateCarousel(1)">
+      <i class="fas fa-chevron-left"></i>
+    </button>
+    <button onclick="rotateCarousel(-1)">
+      <i class="fas fa-chevron-right"></i>
+    </button>
+  </div>
+</div>
+
+<!-- Hidden Auth Overlay -->
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-card">
+    <button class="close-auth" id="closeAuth">
+      <i class="fas fa-times"></i>
+    </button>
+    
+    <h2>Vought Access Portal</h2>
+    
+    <div class="auth-tabs">
+      <div class="auth-tab active" data-tab="token">Your Token</div>
+    </div>
+    
+    <!-- Token Form -->
+    <div class="auth-content active" id="tokenContent">
+      <div class="input-group">
+        <label for="accessToken">Access Token</label>
+        <input type="password" id="accessToken" placeholder="Enter your Vought access token">
+      </div>
+      
+      <button class="auth-button" id="tokenBtn">Verify Token</button>
+      
+      <div class="status-message" id="tokenStatus"></div>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+          </html>
