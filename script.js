@@ -23,7 +23,7 @@ const rememberMeCheckbox = document.getElementById('rememberMe');
 const errorMessage = document.getElementById('errorMessage');
 
 // Check for remembered user
-window.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
   const rememberedEmail = localStorage.getItem('rememberedEmail');
   if (rememberedEmail) {
     emailInput.value = rememberedEmail;
@@ -37,8 +37,14 @@ loginForm.addEventListener('submit', async (e) => {
   
   const email = emailInput.value.trim();
   const password = passwordInput.value;
-  const nationId = Number(nationIdInput.value);
+  const nationId = nationIdInput.value;
   const rememberMe = rememberMeCheckbox.checked;
+
+  // Validate inputs
+  if (!email || !password || !nationId) {
+    showError('Please fill in all fields');
+    return;
+  }
 
   try {
     // Show loading state
@@ -65,7 +71,7 @@ loginForm.addEventListener('submit', async (e) => {
     }
     
     // 3. Verify Nation ID match
-    if (userDoc.data().nationId !== nationId) {
+    if (userDoc.data().nationId !== Number(nationId)) {
       await auth.signOut();
       throw new Error('Nation ID does not match our records');
     }
@@ -82,20 +88,44 @@ loginForm.addEventListener('submit', async (e) => {
     
   } catch (error) {
     console.error('Login error:', error);
-    
-    // User-friendly error messages
-    let message = 'Login failed. Please try again.';
-    if (error.code === 'auth/user-not-found') message = 'Account not found';
-    if (error.code === 'auth/wrong-password') message = 'Incorrect password';
-    if (error.message.includes('not approved')) message = error.message;
-    if (error.message.includes('Nation ID')) message = error.message;
-    
-    errorMessage.textContent = message;
-    errorMessage.style.display = 'block';
-    
-    // Reset button
+    handleLoginError(error);
+  } finally {
+    // Reset button state
     const loginBtn = loginForm.querySelector('button');
-    loginBtn.disabled = false;
-    loginBtn.innerHTML = '<span class="btn-text">ACCESS SYSTEM</span> <i class="fas fa-arrow-right btn-icon"></i>';
+    if (loginBtn) {
+      loginBtn.disabled = false;
+      loginBtn.innerHTML = '<span class="btn-text">ACCESS SYSTEM</span> <i class="fas fa-arrow-right btn-icon"></i>';
+    }
   }
 });
+
+function showError(message) {
+  errorMessage.textContent = message;
+  errorMessage.style.display = 'block';
+}
+
+function handleLoginError(error) {
+  let message = 'Login failed. Please try again.';
+  
+  if (error.code) {
+    switch (error.code) {
+      case 'auth/user-not-found':
+        message = 'Account not found';
+        break;
+      case 'auth/wrong-password':
+        message = 'Incorrect password';
+        break;
+      case 'auth/invalid-email':
+        message = 'Invalid email format';
+        break;
+      case 'auth/too-many-requests':
+        message = 'Too many attempts. Try again later.';
+        break;
+    }
+  } else if (error.message) {
+    if (error.message.includes('not approved')) message = error.message;
+    if (error.message.includes('Nation ID')) message = error.message;
+  }
+  
+  showError(message);
+}
