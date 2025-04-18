@@ -1,4 +1,4 @@
-// Firebase configuration
+// Firebase configuration and initialization
 const firebaseConfig = {
   apiKey: "AIzaSyDHrUcv8c6S04STttlQ8Ck02SuXdeM3psw",
   authDomain: "vought-international-eb8c7.firebaseapp.com",
@@ -9,54 +9,58 @@ const firebaseConfig = {
   measurementId: "G-RL72T75YEV"
 };
 
-// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 
 // ======================
-// CAROUSEL FUNCTIONALITY
+// CAROUSEL FUNCTIONALITY (FIXED ARROWS)
 // ======================
-let angle = 0;
+let currentSlide = 0;
+const totalSlides = 5;
 const carousel = document.getElementById("carousel");
 const dots = document.querySelectorAll('.dot');
 let autoRotateInterval;
 
-// Update dot indicators
+function updateCarousel() {
+  const angle = currentSlide * -72; // Each slide is 72 degrees apart
+  carousel.style.transform = `rotateY(${angle}deg)`;
+  updateDots();
+}
+
 function updateDots() {
-  const currentSlide = (360 - (angle % 360)) / 72;
   dots.forEach((dot, index) => {
     dot.classList.toggle('active', index === currentSlide);
   });
 }
 
-// Rotate carousel by specified direction
 function rotateCarousel(direction) {
-  angle += direction * 72;
-  carousel.style.transform = `rotateY(${angle}deg)`;
-  updateDots();
+  currentSlide = (currentSlide + direction + totalSlides) % totalSlides;
+  updateCarousel();
   resetAutoRotate();
 }
 
-// Rotate to specific slide
 function rotateToSlide(slideIndex) {
-  angle = 360 - (slideIndex * 72);
-  carousel.style.transform = `rotateY(${angle}deg)`;
-  updateDots();
+  currentSlide = slideIndex;
+  updateCarousel();
   resetAutoRotate();
 }
 
-// Reset auto-rotation timer
 function resetAutoRotate() {
   clearInterval(autoRotateInterval);
-  autoRotateInterval = setInterval(() => rotateCarousel(-1), 5000);
+  autoRotateInterval = setInterval(() => rotateCarousel(1), 5000); // Rotate right by default
 }
 
-// Make functions globally available
+// Initialize carousel
+updateCarousel();
+resetAutoRotate();
+
+// Make functions available globally
 window.rotateCarousel = rotateCarousel;
 window.rotateToSlide = rotateToSlide;
 
-// Initialize carousel
-resetAutoRotate();
+// Event listeners for controls
+document.querySelector('.controls button:nth-child(1)').addEventListener('click', () => rotateCarousel(-1)); // Left arrow
+document.querySelector('.controls button:nth-child(2)').addEventListener('click', () => rotateCarousel(1));  // Right arrow
 
 // Pause auto-rotation on hover
 carousel.addEventListener('mouseenter', () => {
@@ -65,12 +69,12 @@ carousel.addEventListener('mouseenter', () => {
 
 carousel.addEventListener('mouseleave', resetAutoRotate);
 
-// Initialize dots
-updateDots();
+// ======================
+// AUTHENTICATION SYSTEM 
+// (Keep all the auth code from previous implementation)
+// ======================
 
-// ======================
-// AUTHENTICATION SYSTEM
-// ======================
+// ... [Rest of your authentication code remains exactly the same] ...
 const authOverlay = document.getElementById('authOverlay');
 const joinNowBtn = document.getElementById('joinNowBtn');
 const closeAuth = document.getElementById('closeAuth');
