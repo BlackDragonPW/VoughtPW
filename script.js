@@ -19,7 +19,17 @@ const loginForm = document.getElementById('loginForm');
 const emailInput = document.getElementById('email');
 const passwordInput = document.getElementById('password');
 const nationIdInput = document.getElementById('nationId');
+const rememberMeCheckbox = document.getElementById('rememberMe');
 const errorMessage = document.getElementById('errorMessage');
+
+// Check for remembered user
+window.addEventListener('DOMContentLoaded', () => {
+  const rememberedEmail = localStorage.getItem('rememberedEmail');
+  if (rememberedEmail) {
+    emailInput.value = rememberedEmail;
+    rememberMeCheckbox.checked = true;
+  }
+});
 
 // Login Form Submission
 loginForm.addEventListener('submit', async (e) => {
@@ -28,12 +38,20 @@ loginForm.addEventListener('submit', async (e) => {
   const email = emailInput.value.trim();
   const password = passwordInput.value;
   const nationId = Number(nationIdInput.value);
+  const rememberMe = rememberMeCheckbox.checked;
 
   try {
     // Show loading state
     const loginBtn = loginForm.querySelector('button');
     loginBtn.disabled = true;
     loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> VERIFYING';
+
+    // Set persistence based on remember me
+    const persistence = rememberMe ? 
+      firebase.auth.Auth.Persistence.LOCAL : 
+      firebase.auth.Auth.Persistence.SESSION;
+
+    await auth.setPersistence(persistence);
 
     // 1. Authenticate with Firebase Auth
     const userCredential = await auth.signInWithEmailAndPassword(email, password);
@@ -52,6 +70,13 @@ loginForm.addEventListener('submit', async (e) => {
       throw new Error('Nation ID does not match our records');
     }
     
+    // Remember email if checked
+    if (rememberMe) {
+      localStorage.setItem('rememberedEmail', email);
+    } else {
+      localStorage.removeItem('rememberedEmail');
+    }
+    
     // Login successful - redirect
     window.location.href = 'dashboard.html';
     
@@ -66,7 +91,7 @@ loginForm.addEventListener('submit', async (e) => {
     if (error.message.includes('Nation ID')) message = error.message;
     
     errorMessage.textContent = message;
-    errorMessage.style.color = 'var(--secondary)';
+    errorMessage.style.display = 'block';
     
     // Reset button
     const loginBtn = loginForm.querySelector('button');
