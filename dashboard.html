@@ -10,25 +10,45 @@
 </head>
 <body>
   <div class="dashboard-container">
+    <!-- Vertical Sidebar -->
     <div class="sidebar">
       <div class="sidebar-header">
         <div class="logo">
-          <span>VOIGHT</span>
+          <span>VOUGHT</span>
           <span class="highlight">INTERNATIONAL</span>
         </div>
       </div>
       <nav class="sidebar-nav">
         <ul>
-          <li class="active" data-section="home"><i class="fas fa-home"></i> Home</li>
-          <li data-section="announcements"><i class="fas fa-bullhorn"></i> Announcements</li>
-          <li data-section="econ"><i class="fas fa-coins"></i> Econ</li>
-          <li data-section="chat"><i class="fas fa-comments"></i> Chat</li>
-          <li data-section="profile"><i class="fas fa-user"></i> Profile</li>
-          <li id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</li>
+          <li class="active" data-section="home" title="Home">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+          </li>
+          <li data-section="announcements" title="Announcements">
+            <i class="fas fa-bullhorn"></i>
+            <span>Announcements</span>
+          </li>
+          <li data-section="econ" title="Economy">
+            <i class="fas fa-coins"></i>
+            <span>Economy</span>
+          </li>
+          <li data-section="chat" title="Chat">
+            <i class="fas fa-comments"></i>
+            <span>Chat</span>
+          </li>
+          <li data-section="profile" title="Profile">
+            <i class="fas fa-user"></i>
+            <span>Profile</span>
+          </li>
+          <li id="logoutBtn" title="Logout">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
+          </li>
         </ul>
       </nav>
     </div>
 
+    <!-- Main Content -->
     <div class="main-content">
       <!-- Home Section -->
       <section id="home" class="content-section active">
