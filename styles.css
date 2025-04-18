@@ -557,3 +557,53 @@ body {
   margin: 10px 0;
   display: none;
 }
+
+/* Profile Section */
+.profile-info {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(0, 191, 255, 0.2);
+}
+
+.info-item label {
+  font-weight: bold;
+  color: var(--primary);
+}
+
+/* Delete button for announcements */
+.btn-delete {
+  background: var(--secondary);
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+.btn-delete:hover {
+  background: #d13800;
+}
+
+/* Status colors */
+.status-approved {
+  color: #4CAF50;
+}
+
+.status-rejected {
+  color: #F44336;
+}
+
+.status-pending {
+  color: #FFC107;
+}
