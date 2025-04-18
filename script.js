@@ -14,74 +14,103 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 
 // ======================
-// CAROUSEL FUNCTIONALITY (FIXED)
+// CAROUSEL FUNCTIONALITY
 // ======================
-let currentAngle = 0;
-const carousel = document.getElementById("carousel");
-const dots = document.querySelectorAll('.dot');
-const totalSlides = 5;
-let autoRotateInterval;
-
-// Update carousel rotation and dots
-function updateCarousel() {
-  carousel.style.transform = `rotateY(${currentAngle}deg)`;
-  updateDots();
-}
-
-// Update dot indicators
-function updateDots() {
-  // Calculate current slide (0-4) based on angle
-  let slideIndex = Math.round((360 - (currentAngle % 360)) / 72;
-  slideIndex = slideIndex % totalSlides; // Ensure it's within 0-4
+document.addEventListener('DOMContentLoaded', function() {
+  // DOM Elements
+  const carousel = document.getElementById("carousel");
+  const slides = document.querySelectorAll('.slide');
+  const dots = document.querySelectorAll('.dot');
+  const leftBtn = document.getElementById("leftBtn");
+  const rightBtn = document.getElementById("rightBtn");
   
-  dots.forEach((dot, index) => {
-    dot.classList.toggle('active', index === slideIndex);
+  // Carousel settings
+  const totalSlides = 5;
+  const angleBetweenSlides = 360 / totalSlides;
+  let currentAngle = 0;
+  let autoRotateInterval;
+  let isRotating = false;
+  const rotationDuration = 800; // ms
+
+  // Initialize slide positions
+  function initSlides() {
+    slides.forEach((slide, index) => {
+      const angle = index * angleBetweenSlides;
+      slide.style.transform = `rotateY(${angle}deg) translateZ(500px)`;
+    });
+  }
+
+  // Rotate carousel with animation
+  function rotateCarousel(angleChange) {
+    if (isRotating) return;
+    isRotating = true;
+    
+    currentAngle += angleChange;
+    carousel.style.transform = `rotateY(${currentAngle}deg)`;
+    
+    // Update dots after animation completes
+    setTimeout(() => {
+      updateDots();
+      isRotating = false;
+    }, rotationDuration);
+    
+    resetAutoRotate();
+  }
+
+  // Update dot indicators
+  function updateDots() {
+    const activeDotIndex = Math.round((360 - (currentAngle % 360)) / angleBetweenSlides) % totalSlides;
+    dots.forEach((dot, index) => {
+      dot.classList.toggle('active', index === activeDotIndex);
+    });
+  }
+
+  // Auto-rotation
+  function startAutoRotate() {
+    autoRotateInterval = setInterval(() => {
+      rotateCarousel(-angleBetweenSlides);
+    }, 5000);
+  }
+
+  function resetAutoRotate() {
+    clearInterval(autoRotateInterval);
+    startAutoRotate();
+  }
+
+  // Event listeners
+  leftBtn.addEventListener('click', () => {
+    rotateCarousel(angleBetweenSlides);
   });
-}
 
-// Rotate carousel by specified angle
-function rotateCarousel(angleChange) {
-  currentAngle += angleChange;
-  updateCarousel();
-  resetAutoRotate();
-}
+  rightBtn.addEventListener('click', () => {
+    rotateCarousel(-angleBetweenSlides);
+  });
 
-// Rotate to specific slide index
-function rotateToSlide(slideIndex) {
-  currentAngle = 360 - (slideIndex * 72);
-  updateCarousel();
-  resetAutoRotate();
-}
+  dots.forEach((dot, index) => {
+    dot.addEventListener('click', () => {
+      const targetAngle = 360 - (index * angleBetweenSlides);
+      const angleDiff = targetAngle - (currentAngle % 360);
+      const shortestAngle = ((angleDiff + 180) % 360) - 180;
+      currentAngle += shortestAngle;
+      carousel.style.transform = `rotateY(${currentAngle}deg)`;
+      updateDots();
+      resetAutoRotate();
+    });
+  });
 
-// Reset auto-rotation timer
-function resetAutoRotate() {
-  clearInterval(autoRotateInterval);
-  autoRotateInterval = setInterval(() => rotateCarousel(-72), 5000); // Rotate left every 5 sec
-}
+  // Pause on hover
+  carousel.addEventListener('mouseenter', () => {
+    clearInterval(autoRotateInterval);
+  });
 
-// Initialize carousel
-updateCarousel();
-resetAutoRotate();
+  carousel.addEventListener('mouseleave', () => {
+    startAutoRotate();
+  });
 
-// Make functions available globally
-window.rotateCarousel = rotateCarousel;
-window.rotateToSlide = rotateToSlide;
-
-// Event listeners for arrow controls
-document.querySelector('.controls button:nth-child(1)').addEventListener('click', () => {
-  rotateCarousel(72); // Left arrow rotates clockwise (positive)
+  // Initialize
+  initSlides();
+  startAutoRotate();
 });
-
-document.querySelector('.controls button:nth-child(2)').addEventListener('click', () => {
-  rotateCarousel(-72); // Right arrow rotates counter-clockwise (negative)
-});
-
-// Pause auto-rotation on hover
-carousel.addEventListener('mouseenter', () => {
-  clearInterval(autoRotateInterval);
-});
-
-carousel.addEventListener('mouseleave', resetAutoRotate);
 
 // ======================
 // AUTHENTICATION SYSTEM
@@ -94,68 +123,119 @@ const loginStatus = document.getElementById('loginStatus');
 const loginEmail = document.getElementById('loginEmail');
 const loginPassword = document.getElementById('loginPassword');
 
-// Show auth overlay
-joinNowBtn.addEventListener('click', () => {
-  document.body.classList.add('no-scroll');
-  authOverlay.classList.add('active');
-});
+// Show/hide auth overlay
+function toggleAuthOverlay(show) {
+  document.body.classList.toggle('no-scroll', show);
+  authOverlay.classList.toggle('active', show);
+  if (show) loginEmail.focus();
+}
 
-// Close auth overlay
-closeAuth.addEventListener('click', () => {
-  document.body.classList.remove('no-scroll');
-  authOverlay.classList.remove('active');
-});
+joinNowBtn.addEventListener('click', () => toggleAuthOverlay(true));
+closeAuth.addEventListener('click', () => toggleAuthOverlay(false));
 
 // Handle login
-loginBtn.addEventListener('click', () => {
+async function handleLogin() {
   const email = loginEmail.value.trim();
   const password = loginPassword.value.trim();
-  
+
+  // Validation
   if (!email || !password) {
     showStatus('Please enter both email and password', 'error');
     return;
   }
 
-  auth.signInWithEmailAndPassword(email, password)
-    .then((userCredential) => {
-      showStatus('Login successful! Redirecting...', 'success');
-      setTimeout(() => {
-        window.location.href = "member-portal.html";
-      }, 1500);
-    })
-    .catch((error) => {
-      showStatus(getErrorMessage(error), 'error');
-    });
-});
+  if (!email.endsWith('@vought.com')) {
+    showStatus('Only @vought.com emails are allowed', 'error');
+    return;
+  }
 
-// Helper functions
+  try {
+    showStatus('Authenticating...', '');
+    loginBtn.disabled = true;
+
+    const userCredential = await auth.signInWithEmailAndPassword(email, password);
+    
+    // Successful login
+    showStatus('Login successful! Redirecting...', 'success');
+    sessionStorage.setItem('voughtAuthenticated', 'true');
+    
+    setTimeout(() => {
+      window.location.href = "member-portal.html";
+    }, 1500);
+
+  } catch (error) {
+    handleAuthError(error);
+    loginBtn.disabled = false;
+  }
+}
+
+// Handle auth errors
+function handleAuthError(error) {
+  let errorMessage = 'Login failed. Please try again.';
+  
+  switch (error.code) {
+    case 'auth/invalid-email':
+      errorMessage = 'Invalid email format';
+      break;
+    case 'auth/user-disabled':
+      errorMessage = 'Account disabled';
+      break;
+    case 'auth/user-not-found':
+      errorMessage = 'Account not found';
+      break;
+    case 'auth/wrong-password':
+      errorMessage = 'Incorrect password';
+      break;
+    case 'auth/too-many-requests':
+      errorMessage = 'Too many attempts. Try again later.';
+      break;
+    default:
+      console.error('Auth error:', error);
+  }
+
+  showStatus(errorMessage, 'error');
+  loginPassword.value = '';
+  loginPassword.focus();
+}
+
+// Show status messages
 function showStatus(message, type) {
   loginStatus.textContent = message;
-  loginStatus.className = `status-message ${type}`;
+  loginStatus.className = type ? `status-message ${type}` : 'status-message';
 }
 
-function getErrorMessage(error) {
-  switch (error.code) {
-    case 'auth/invalid-email': return 'Invalid email format';
-    case 'auth/user-disabled': return 'Account disabled';
-    case 'auth/user-not-found': return 'Account not found';
-    case 'auth/wrong-password': return 'Incorrect password';
-    case 'auth/too-many-requests': return 'Too many attempts. Try again later.';
-    default: return 'Login failed. Please try again.';
-  }
-}
+// Event listeners
+loginBtn.addEventListener('click', handleLogin);
+loginPassword.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') handleLogin();
+});
 
-// Close overlay when clicking outside
 authOverlay.addEventListener('click', (e) => {
-  if (e.target === authOverlay) {
-    document.body.classList.remove('no-scroll');
-    authOverlay.classList.remove('active');
-  }
+  if (e.target === authOverlay) toggleAuthOverlay(false);
 });
 
 // Check auth state
 auth.onAuthStateChanged((user) => {
-  if (user && !window.location.pathname.includes('index.html')) {
-    window.location.href = "member-portal.html";
+  if (user) {
+    console.log('User logged in:', user.email);
+    if (!window.location.pathname.includes('member-portal.html')) {
+      window.location.href = "member-portal.html";
+    }
+  } else {
+    console.log('User logged out');
+    if (!window.location.pathname.endsWith('index.html')) {
+      sessionStorage.removeItem('voughtAuthenticated');
+    }
   }
 });
+
+// Check for logout redirect
+if (sessionStorage.getItem('logoutRedirect')) {
+  sessionStorage.removeItem('logoutRedirect');
+  showStatus('You have been logged out successfully', 'success');
+  setTimeout(() => {
+    if (document.getElementById('loginStatus')) {
+      document.getElementById('loginStatus').textContent = '';
+    }
+  }, 3000);
+        }
