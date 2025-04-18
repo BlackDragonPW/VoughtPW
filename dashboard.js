@@ -16,7 +16,7 @@ const PNW_API_KEY = "7d58ca300d0ac2f7b373";
 
 // DOM Elements
 const sections = document.querySelectorAll('.content-section');
-const navItems = document.querySelectorAll('.sidebar-nav li');
+const navItems = document.querySelectorAll('.nav-item');
 const logoutBtn = document.getElementById('logoutBtn');
 const newAnnouncementBtn = document.getElementById('newAnnouncementBtn');
 const announcementModal = document.getElementById('announcementModal');
@@ -43,47 +43,55 @@ auth.onAuthStateChanged(async (user) => {
   }
 
   currentUser = user;
-  const userDoc = await db.collection('approvedUsers').doc(user.email).get();
-  
-  if (userDoc.exists) {
-    userNationId = userDoc.data().nationId;
-    isAdmin = userDoc.data().role === 'admin';
+  try {
+    const userDoc = await db.collection('approvedUsers').doc(user.email).get();
     
-    // Load profile data
-    loadProfile();
-    
-    // Show admin controls if admin
-    if (isAdmin) {
-      document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
-    }
+    if (userDoc.exists) {
+      userNationId = userDoc.data().nationId;
+      isAdmin = userDoc.data().role === 'admin';
+      
+      // Load profile data
+      loadProfile();
+      
+      // Show admin controls if admin
+      if (isAdmin) {
+        document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+        document.querySelectorAll('.btn-admin').forEach(el => el.classList.remove('hidden'));
+      }
 
-    // Load initial section
-    loadSection('home');
-    
-    // Set up real-time listeners
-    setupRealTimeListeners();
-  } else {
-    auth.signOut();
+      // Set up navigation
+      setupNavigation();
+      
+      // Load initial section
+      loadSection('home');
+      
+      // Set up real-time listeners
+      setupRealTimeListeners();
+    } else {
+      await auth.signOut();
+      window.location.href = 'index.html';
+    }
+  } catch (error) {
+    console.error('Error initializing dashboard:', error);
+    alert('Error loading dashboard. Please try again.');
+    await auth.signOut();
+    window.location.href = 'index.html';
   }
 });
 
-// Navigation
-navItems.forEach(item => {
-  if (item.id !== 'logoutBtn') {
+// Set up navigation
+function setupNavigation() {
+  navItems.forEach(item => {
     item.addEventListener('click', () => {
       const section = item.getAttribute('data-section');
       loadSection(section);
     });
-  }
-});
-
-// Logout
-logoutBtn.addEventListener('click', () => {
-  auth.signOut();
-});
+  });
+}
 
 // Section loading
 function loadSection(sectionName) {
+  // Hide all sections
   sections.forEach(section => {
     section.classList.add('hidden');
     if (section.id === sectionName) {
@@ -91,6 +99,7 @@ function loadSection(sectionName) {
     }
   });
 
+  // Update active nav item
   navItems.forEach(item => {
     item.classList.remove('active');
     if (item.getAttribute('data-section') === sectionName) {
@@ -107,11 +116,16 @@ function loadSection(sectionName) {
       loadAnnouncements();
       break;
     case 'econ':
+      // Activate the first tab by default
+      document.querySelector('.tab-btn[data-tab="request"]').click();
       loadLoanRequests();
       loadLoanHistory();
       break;
     case 'chat':
       loadChatMessages();
+      break;
+    case 'profile':
+      // Profile is already loaded
       break;
   }
 }
@@ -171,7 +185,11 @@ async function loadNationData() {
     });
 
     const { data } = await response.json();
-    displayNationData(data.nations.data[0]);
+    if (data?.nations?.data?.length > 0) {
+      displayNationData(data.nations.data[0]);
+    } else {
+      throw new Error('No nation data found');
+    }
   } catch (error) {
     console.error('Error loading nation data:', error);
     nationDataEl.innerHTML = '<p class="error">Error loading nation data. Please try again later.</p>';
@@ -188,70 +206,70 @@ function displayNationData(nation) {
   nationDataEl.classList.remove('hidden');
   
   nationDataEl.innerHTML = `
-    <div class="nation-header">
-      <img src="${nation.flag}" alt="${nation.nation_name} Flag" class="nation-flag">
-      <div>
-        <h2>${nation.nation_name}</h2>
-        <p>Leader: ${nation.leader_name}</p>
-        <p>Alliance: ${nation.alliance?.name || 'None'}</p>
-        <p>Score: ${nation.score.toLocaleString()}</p>
+    <div class="stat-card">
+      <div class="nation-header">
+        <img src="${nation.flag}" alt="${nation.nation_name} Flag" class="nation-flag">
+        <div>
+          <h2>${nation.nation_name}</h2>
+          <p>Leader: ${nation.leader_name}</p>
+          <p>Alliance: ${nation.alliance?.name || 'None'}</p>
+          <p>Score: ${nation.score.toLocaleString()}</p>
+        </div>
       </div>
     </div>
     
-    <div class="nation-stats-grid">
-      <div class="stat-card">
-        <h3>Military</h3>
-        <p>Soldiers: ${nation.soldiers.toLocaleString()}</p>
-        <p>Tanks: ${nation.tanks.toLocaleString()}</p>
-        <p>Aircraft: ${nation.aircraft.toLocaleString()}</p>
-        <p>Ships: ${nation.ships.toLocaleString()}</p>
-        <p>Missiles: ${nation.missiles.toLocaleString()}</p>
-        <p>Nukes: ${nation.nukes.toLocaleString()}</p>
-        <p>Spies: ${nation.spies.toLocaleString()}</p>
-      </div>
-      
-      <div class="stat-card">
-        <h3>Policies</h3>
-        <p>War Policy: ${nation.war_policy}</p>
-        <p>Domestic Policy: ${nation.domestic_policy}</p>
-        <p>Color: ${nation.color}</p>
-        <p>Continent: ${nation.continent}</p>
-      </div>
-      
-      <div class="stat-card">
-        <h3>Cities (${nation.num_cities})</h3>
-        ${nation.cities.map(city => `
-          <div class="city-card">
-            <h4>${city.name}</h4>
-            <p>Infra: ${city.infrastructure.toLocaleString()}</p>
-            <p>Land: ${city.land.toLocaleString()}</p>
-            <p>Powered: ${city.powered ? 'Yes' : 'No'}</p>
-          </div>
-        `).join('')}
-      </div>
-      
-      ${nation.treasures?.length > 0 ? `
-      <div class="stat-card">
-        <h3>Treasures</h3>
-        ${nation.treasures.map(treasure => `
-          <p>${treasure.name}: ${treasure.bonus}</p>
-        `).join('')}
-      </div>
-      ` : ''}
+    <div class="stat-card">
+      <h3>Military</h3>
+      <p>Soldiers: ${nation.soldiers.toLocaleString()}</p>
+      <p>Tanks: ${nation.tanks.toLocaleString()}</p>
+      <p>Aircraft: ${nation.aircraft.toLocaleString()}</p>
+      <p>Ships: ${nation.ships.toLocaleString()}</p>
+      <p>Missiles: ${nation.missiles.toLocaleString()}</p>
+      <p>Nukes: ${nation.nukes.toLocaleString()}</p>
+      <p>Spies: ${nation.spies.toLocaleString()}</p>
     </div>
+    
+    <div class="stat-card">
+      <h3>Policies</h3>
+      <p>War Policy: ${nation.war_policy}</p>
+      <p>Domestic Policy: ${nation.domestic_policy}</p>
+      <p>Color: ${nation.color}</p>
+      <p>Continent: ${nation.continent}</p>
+    </div>
+    
+    <div class="stat-card">
+      <h3>Cities (${nation.num_cities})</h3>
+      ${nation.cities.map(city => `
+        <div class="city-card">
+          <h4>${city.name}</h4>
+          <p>Infra: ${city.infrastructure.toLocaleString()}</p>
+          <p>Land: ${city.land.toLocaleString()}</p>
+          <p>Powered: ${city.powered ? 'Yes' : 'No'}</p>
+        </div>
+      `).join('')}
+    </div>
+    
+    ${nation.treasures?.length > 0 ? `
+    <div class="stat-card">
+      <h3>Treasures</h3>
+      ${nation.treasures.map(treasure => `
+        <p>${treasure.name}: ${treasure.bonus}</p>
+      `).join('')}
+    </div>
+    ` : ''}
   `;
 }
 
 // Announcements
-newAnnouncementBtn.addEventListener('click', () => {
+newAnnouncementBtn?.addEventListener('click', () => {
   announcementModal.classList.remove('hidden');
 });
 
-closeModal.addEventListener('click', () => {
+closeModal?.addEventListener('click', () => {
   announcementModal.classList.add('hidden');
 });
 
-announcementForm.addEventListener('submit', async (e) => {
+announcementForm?.addEventListener('submit', async (e) => {
   e.preventDefault();
   
   const title = document.getElementById('announcementTitle').value;
@@ -314,7 +332,7 @@ async function loadAnnouncements() {
 }
 
 // Loan Requests
-loanRequestForm.addEventListener('submit', async (e) => {
+loanRequestForm?.addEventListener('submit', async (e) => {
   e.preventDefault();
   
   const amount = parseInt(document.getElementById('loanAmount').value);
@@ -456,7 +474,7 @@ async function processLoanRequest(requestId, status) {
 }
 
 // Chat
-chatForm.addEventListener('submit', async (e) => {
+chatForm?.addEventListener('submit', async (e) => {
   e.preventDefault();
   
   const messageInput = document.getElementById('chatMessage');
@@ -563,4 +581,4 @@ function setupRealTimeListeners() {
       .where('status', '==', 'pending')
       .onSnapshot(() => loadLoanRequests());
   }
-}
+                                            }
