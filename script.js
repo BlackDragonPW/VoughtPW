@@ -1,4 +1,4 @@
-// Firebase configuration and initialization
+// Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyDHrUcv8c6S04STttlQ8Ck02SuXdeM3psw",
   authDomain: "vought-international-eb8c7.firebaseapp.com",
@@ -9,45 +9,54 @@ const firebaseConfig = {
   measurementId: "G-RL72T75YEV"
 };
 
+// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 
 // ======================
-// CAROUSEL FUNCTIONALITY (FIXED ARROWS)
+// CAROUSEL FUNCTIONALITY (FIXED)
 // ======================
-let currentSlide = 0;
-const totalSlides = 5;
+let currentAngle = 0;
 const carousel = document.getElementById("carousel");
 const dots = document.querySelectorAll('.dot');
+const totalSlides = 5;
 let autoRotateInterval;
 
+// Update carousel rotation and dots
 function updateCarousel() {
-  const angle = currentSlide * -72; // Each slide is 72 degrees apart
-  carousel.style.transform = `rotateY(${angle}deg)`;
+  carousel.style.transform = `rotateY(${currentAngle}deg)`;
   updateDots();
 }
 
+// Update dot indicators
 function updateDots() {
+  // Calculate current slide (0-4) based on angle
+  let slideIndex = Math.round((360 - (currentAngle % 360)) / 72;
+  slideIndex = slideIndex % totalSlides; // Ensure it's within 0-4
+  
   dots.forEach((dot, index) => {
-    dot.classList.toggle('active', index === currentSlide);
+    dot.classList.toggle('active', index === slideIndex);
   });
 }
 
-function rotateCarousel(direction) {
-  currentSlide = (currentSlide + direction + totalSlides) % totalSlides;
+// Rotate carousel by specified angle
+function rotateCarousel(angleChange) {
+  currentAngle += angleChange;
   updateCarousel();
   resetAutoRotate();
 }
 
+// Rotate to specific slide index
 function rotateToSlide(slideIndex) {
-  currentSlide = slideIndex;
+  currentAngle = 360 - (slideIndex * 72);
   updateCarousel();
   resetAutoRotate();
 }
 
+// Reset auto-rotation timer
 function resetAutoRotate() {
   clearInterval(autoRotateInterval);
-  autoRotateInterval = setInterval(() => rotateCarousel(1), 5000); // Rotate right by default
+  autoRotateInterval = setInterval(() => rotateCarousel(-72), 5000); // Rotate left every 5 sec
 }
 
 // Initialize carousel
@@ -58,9 +67,14 @@ resetAutoRotate();
 window.rotateCarousel = rotateCarousel;
 window.rotateToSlide = rotateToSlide;
 
-// Event listeners for controls
-document.querySelector('.controls button:nth-child(1)').addEventListener('click', () => rotateCarousel(-1)); // Left arrow
-document.querySelector('.controls button:nth-child(2)').addEventListener('click', () => rotateCarousel(1));  // Right arrow
+// Event listeners for arrow controls
+document.querySelector('.controls button:nth-child(1)').addEventListener('click', () => {
+  rotateCarousel(72); // Left arrow rotates clockwise (positive)
+});
+
+document.querySelector('.controls button:nth-child(2)').addEventListener('click', () => {
+  rotateCarousel(-72); // Right arrow rotates counter-clockwise (negative)
+});
 
 // Pause auto-rotation on hover
 carousel.addEventListener('mouseenter', () => {
@@ -70,11 +84,8 @@ carousel.addEventListener('mouseenter', () => {
 carousel.addEventListener('mouseleave', resetAutoRotate);
 
 // ======================
-// AUTHENTICATION SYSTEM 
-// (Keep all the auth code from previous implementation)
+// AUTHENTICATION SYSTEM
 // ======================
-
-// ... [Rest of your authentication code remains exactly the same] ...
 const authOverlay = document.getElementById('authOverlay');
 const joinNowBtn = document.getElementById('joinNowBtn');
 const closeAuth = document.getElementById('closeAuth');
@@ -87,7 +98,6 @@ const loginPassword = document.getElementById('loginPassword');
 joinNowBtn.addEventListener('click', () => {
   document.body.classList.add('no-scroll');
   authOverlay.classList.add('active');
-  loginEmail.focus();
 });
 
 // Close auth overlay
@@ -96,86 +106,43 @@ closeAuth.addEventListener('click', () => {
   authOverlay.classList.remove('active');
 });
 
-// Handle login form submission
-loginBtn.addEventListener('click', handleLogin);
-
-// Also allow login on Enter key
-loginPassword.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') {
-    handleLogin();
-  }
-});
-
-async function handleLogin() {
+// Handle login
+loginBtn.addEventListener('click', () => {
   const email = loginEmail.value.trim();
   const password = loginPassword.value.trim();
   
-  // Validate inputs
   if (!email || !password) {
     showStatus('Please enter both email and password', 'error');
     return;
   }
 
-  try {
-    showStatus('Authenticating...', '');
-    loginBtn.disabled = true;
-    
-    // Attempt Firebase authentication
-    const userCredential = await auth.signInWithEmailAndPassword(email, password);
-    
-    // Successful login
-    showStatus('Login successful! Redirecting...', 'success');
-    
-    // Store login state in session
-    sessionStorage.setItem('voughtAuthenticated', 'true');
-    
-    // Redirect after delay
-    setTimeout(() => {
-      window.location.href = "member-portal.html";
-    }, 1500);
-    
-  } catch (error) {
-    handleAuthError(error);
-    loginBtn.disabled = false;
-  }
-}
+  auth.signInWithEmailAndPassword(email, password)
+    .then((userCredential) => {
+      showStatus('Login successful! Redirecting...', 'success');
+      setTimeout(() => {
+        window.location.href = "member-portal.html";
+      }, 1500);
+    })
+    .catch((error) => {
+      showStatus(getErrorMessage(error), 'error');
+    });
+});
 
-// Handle different authentication errors
-function handleAuthError(error) {
-  let errorMessage = 'Login failed. Please try again.';
-  
-  switch (error.code) {
-    case 'auth/invalid-email':
-      errorMessage = 'Invalid email format';
-      break;
-    case 'auth/user-disabled':
-      errorMessage = 'This account has been disabled';
-      break;
-    case 'auth/user-not-found':
-      errorMessage = 'Account not found';
-      break;
-    case 'auth/wrong-password':
-      errorMessage = 'Incorrect password';
-      break;
-    case 'auth/too-many-requests':
-      errorMessage = 'Too many attempts. Try again later.';
-      break;
-    case 'auth/network-request-failed':
-      errorMessage = 'Network error. Check your connection.';
-      break;
-    default:
-      console.error('Authentication error:', error);
-  }
-  
-  showStatus(errorMessage, 'error');
-  loginPassword.value = '';
-  loginPassword.focus();
-}
-
-// Display status messages
+// Helper functions
 function showStatus(message, type) {
   loginStatus.textContent = message;
-  loginStatus.className = type ? `status-message ${type}` : 'status-message';
+  loginStatus.className = `status-message ${type}`;
+}
+
+function getErrorMessage(error) {
+  switch (error.code) {
+    case 'auth/invalid-email': return 'Invalid email format';
+    case 'auth/user-disabled': return 'Account disabled';
+    case 'auth/user-not-found': return 'Account not found';
+    case 'auth/wrong-password': return 'Incorrect password';
+    case 'auth/too-many-requests': return 'Too many attempts. Try again later.';
+    default: return 'Login failed. Please try again.';
+  }
 }
 
 // Close overlay when clicking outside
@@ -186,61 +153,9 @@ authOverlay.addEventListener('click', (e) => {
   }
 });
 
-// Check authentication state on page load
+// Check auth state
 auth.onAuthStateChanged((user) => {
-  if (user) {
-    // User is logged in
-    console.log('Authenticated user:', user.email);
-    
-    // If user somehow reached login page while authenticated
-    if (window.location.pathname.includes('member-portal.html')) {
-      window.location.href = "member-portal.html";
-    }
-  } else {
-    // User is logged out
-    console.log('User logged out');
-    
-    // Clear session if not on main page
-    if (!window.location.pathname.endsWith('/') && 
-        !window.location.pathname.endsWith('index.html')) {
-      sessionStorage.removeItem('voughtAuthenticated');
-    }
+  if (user && !window.location.pathname.includes('index.html')) {
+    window.location.href = "member-portal.html";
   }
 });
-
-// Check for redirect from member portal (logout)
-if (sessionStorage.getItem('logoutRedirect')) {
-  sessionStorage.removeItem('logoutRedirect');
-  showStatus('You have been logged out successfully', 'success');
-  setTimeout(() => {
-    const statusElement = document.getElementById('loginStatus');
-    if (statusElement) statusElement.textContent = '';
-  }, 3000);
-}
-
-// ======================
-// SESSION MANAGEMENT
-// ======================
-
-// Check for existing session on page load
-window.addEventListener('DOMContentLoaded', () => {
-  if (sessionStorage.getItem('voughtAuthenticated') {
-    auth.currentUser?.getIdToken().then(token => {
-      // You could verify token with backend here if needed
-      console.log('User session maintained');
-    }).catch(() => {
-      sessionStorage.removeItem('voughtAuthenticated');
-    });
-  }
-});
-
-// Sample logout function (for member-portal.html)
-window.logoutUser = function() {
-  auth.signOut().then(() => {
-    sessionStorage.removeItem('voughtAuthenticated');
-    sessionStorage.setItem('logoutRedirect', 'true');
-    window.location.href = "index.html";
-  }).catch(error => {
-    console.error('Logout error:', error);
-  });
-};
