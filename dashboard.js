@@ -17,7 +17,6 @@ const PNW_API_KEY = "7d58ca300d0ac2f7b373";
 // DOM Elements
 const sections = document.querySelectorAll('.content-section');
 const navItems = document.querySelectorAll('.nav-item');
-const logoutBtn = document.getElementById('logoutBtn');
 const newAnnouncementBtn = document.getElementById('newAnnouncementBtn');
 const announcementModal = document.getElementById('announcementModal');
 const closeModal = document.querySelector('.close-modal');
@@ -30,6 +29,7 @@ const chatMessagesContainer = document.querySelector('.chat-messages');
 const profileEmail = document.getElementById('profileEmail');
 const profileNationId = document.getElementById('profileNationId');
 const profileRole = document.getElementById('profileRole');
+const profilePassword = document.getElementById('profilePassword');
 
 let currentUser = null;
 let userNationId = null;
@@ -56,7 +56,7 @@ auth.onAuthStateChanged(async (user) => {
       // Show admin controls if admin
       if (isAdmin) {
         document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
-        document.querySelectorAll('.btn-admin').forEach(el => el.classList.remove('hidden'));
+        document.getElementById('newAnnouncementBtn').classList.remove('hidden');
       }
 
       // Set up navigation
@@ -66,13 +66,13 @@ auth.onAuthStateChanged(async (user) => {
       loadSection('home');
       
       // Set up real-time listeners
-      setupRealTimeListeners();
+      setupAllListeners();
     } else {
       await auth.signOut();
       window.location.href = 'index.html';
     }
   } catch (error) {
-    console.error('Error initializing dashboard:', error);
+    console.error('Initialization error:', error);
     alert('Error loading dashboard. Please try again.');
     await auth.signOut();
     window.location.href = 'index.html';
@@ -130,7 +130,7 @@ function loadSection(sectionName) {
   }
 }
 
-// Load nation data from Politics and War API
+// Nation Data Functions
 async function loadNationData() {
   const nationDataEl = document.querySelector('.nation-data');
   const loadingSpinner = document.querySelector('.loading-spinner');
@@ -260,7 +260,7 @@ function displayNationData(nation) {
   `;
 }
 
-// Announcements
+// Announcements Functions
 newAnnouncementBtn?.addEventListener('click', () => {
   announcementModal.classList.remove('hidden');
 });
@@ -305,13 +305,12 @@ async function loadAnnouncements() {
       .orderBy('createdAt', 'desc')
       .get();
     
-    announcementsList.innerHTML = '';
-    
     if (snapshot.empty) {
       announcementsList.innerHTML = '<p>No announcements yet.</p>';
       return;
     }
     
+    announcementsList.innerHTML = '';
     snapshot.forEach(doc => {
       const announcement = doc.data();
       const announcementEl = document.createElement('div');
@@ -322,8 +321,24 @@ async function loadAnnouncements() {
         <div class="announcement-meta">
           Posted by ${announcement.authorEmail} on ${new Date(announcement.createdAt?.toDate()).toLocaleString()}
         </div>
+        ${isAdmin ? `<button class="btn-delete" data-id="${doc.id}">Delete</button>` : ''}
       `;
       announcementsList.appendChild(announcementEl);
+    });
+
+    // Add delete event listeners
+    document.querySelectorAll('.btn-delete').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (confirm('Are you sure you want to delete this announcement?')) {
+          try {
+            await db.collection('announcements').doc(btn.dataset.id).delete();
+            loadAnnouncements();
+          } catch (error) {
+            console.error('Error deleting announcement:', error);
+            alert('Failed to delete announcement');
+          }
+        }
+      });
     });
   } catch (error) {
     console.error('Error loading announcements:', error);
@@ -331,12 +346,17 @@ async function loadAnnouncements() {
   }
 }
 
-// Loan Requests
+// Econ Functions
 loanRequestForm?.addEventListener('submit', async (e) => {
   e.preventDefault();
   
   const amount = parseInt(document.getElementById('loanAmount').value);
   
+  if (!amount || amount <= 0) {
+    alert('Please enter a valid amount');
+    return;
+  }
+
   try {
     await db.collection('loanRequests').add({
       nationId: userNationId,
@@ -368,13 +388,12 @@ async function loadLoanRequests() {
       .orderBy('createdAt', 'desc')
       .get();
     
-    requestsList.innerHTML = '';
-    
     if (snapshot.empty) {
       requestsList.innerHTML = '<p>No pending loan requests.</p>';
       return;
     }
     
+    requestsList.innerHTML = '';
     snapshot.forEach(doc => {
       const request = doc.data();
       const requestEl = document.createElement('div');
@@ -427,13 +446,12 @@ async function loadLoanHistory() {
     
     const snapshot = await query.get();
     
-    historyList.innerHTML = '';
-    
     if (snapshot.empty) {
       historyList.innerHTML = '<p>No loan history found.</p>';
       return;
     }
     
+    historyList.innerHTML = '';
     snapshot.forEach(doc => {
       const request = doc.data();
       const requestEl = document.createElement('div');
@@ -444,6 +462,7 @@ async function loadLoanHistory() {
         <p><strong>Date:</strong> ${new Date(request.createdAt?.toDate()).toLocaleString()}</p>
         ${request.processedAt ? `<p><strong>Processed:</strong> ${new Date(request.processedAt?.toDate()).toLocaleString()}</p>` : ''}
         ${request.adminNotes ? `<p><strong>Notes:</strong> ${request.adminNotes}</p>` : ''}
+        ${isAdmin ? `<p><strong>Processed by:</strong> ${request.processedBy || 'System'}</p>` : ''}
       `;
       historyList.appendChild(requestEl);
     });
@@ -473,7 +492,7 @@ async function processLoanRequest(requestId, status) {
   }
 }
 
-// Chat
+// Chat Functions
 chatForm?.addEventListener('submit', async (e) => {
   e.preventDefault();
   
@@ -506,17 +525,14 @@ function loadChatMessages() {
     .orderBy('createdAt', 'desc')
     .limit(50)
     .onSnapshot(snapshot => {
-      chatContainer.innerHTML = '';
-      
       if (snapshot.empty) {
         chatContainer.innerHTML = '<p>No messages yet. Be the first to chat!</p>';
         return;
       }
       
+      chatContainer.innerHTML = '';
       const messages = [];
-      snapshot.forEach(doc => {
-        messages.unshift(doc.data()); // Reverse order to show newest at bottom
-      });
+      snapshot.forEach(doc => messages.unshift(doc.data()));
       
       messages.forEach(msg => {
         const messageEl = document.createElement('div');
@@ -532,7 +548,6 @@ function loadChatMessages() {
         chatContainer.appendChild(messageEl);
       });
       
-      // Auto-scroll to bottom
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }, error => {
       console.error('Error loading chat messages:', error);
@@ -540,9 +555,10 @@ function loadChatMessages() {
     });
 }
 
-// Profile
+// Profile Functions
 function loadProfile() {
   profileEmail.textContent = currentUser.email;
+  profilePassword.textContent = '••••••••'; // Masked password
   
   db.collection('approvedUsers').doc(currentUser.email).get()
     .then(doc => {
@@ -551,6 +567,11 @@ function loadProfile() {
         profileNationId.textContent = userData.nationId;
         profileRole.textContent = userData.role === 'admin' ? 'Admin' : 'Member';
       }
+    })
+    .catch(error => {
+      console.error('Error loading profile:', error);
+      profileNationId.textContent = 'Error loading';
+      profileRole.textContent = 'Error loading';
     });
 }
 
@@ -562,23 +583,44 @@ econTabs.forEach(tab => {
     
     tabContents.forEach(content => content.classList.add('hidden'));
     document.getElementById(tab.dataset.tab).classList.remove('hidden');
+    
+    // Reload content when switching tabs
+    if (tab.dataset.tab === 'approve') {
+      loadLoanRequests();
+    } else if (tab.dataset.tab === 'history') {
+      loadLoanHistory();
+    }
   });
 });
 
-// Set up real-time listeners
-function setupRealTimeListeners() {
-  // Chat messages update in real-time
+// Set up all real-time listeners
+function setupAllListeners() {
+  // Chat messages
   loadChatMessages();
   
-  // Announcements update in real-time
+  // Announcements
   db.collection('announcements')
+    .orderBy('isPinned', 'desc')
     .orderBy('createdAt', 'desc')
     .onSnapshot(() => loadAnnouncements());
   
-  // Loan requests update in real-time (for admins)
+  // Loan requests (admin only)
   if (isAdmin) {
     db.collection('loanRequests')
       .where('status', '==', 'pending')
+      .orderBy('createdAt', 'desc')
       .onSnapshot(() => loadLoanRequests());
   }
-                                            }
+  
+  // Loan history
+  const loanHistoryQuery = isAdmin 
+    ? db.collection('loanRequests')
+        .where('status', 'in', ['approved', 'rejected'])
+        .orderBy('processedAt', 'desc')
+    : db.collection('loanRequests')
+        .where('requesterEmail', '==', currentUser.email)
+        .where('status', 'in', ['approved', 'rejected'])
+        .orderBy('processedAt', 'desc');
+  
+  loanHistoryQuery.onSnapshot(() => loadLoanHistory());
+}
