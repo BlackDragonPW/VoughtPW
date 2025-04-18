@@ -151,88 +151,38 @@ body {
 /* Dashboard Styles */
 .dashboard-container {
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
+  padding-bottom: 70px; /* Space for bottom nav */
 }
 
-/* Vertical Sidebar */
-.sidebar {
-  width: 70px;
+.dashboard-header {
+  padding: 15px;
   background: var(--darker);
-  border-right: 1px solid rgba(0, 191, 255, 0.1);
-  padding: 15px 0;
-  transition: width 0.3s ease;
-  overflow: hidden;
-}
-
-.sidebar:hover {
-  width: 200px;
-}
-
-.sidebar-header {
-  padding: 0 15px 20px;
-  white-space: nowrap;
-}
-
-.logo {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--light);
-}
-
-.logo .highlight {
-  color: var(--primary);
-}
-
-.sidebar-nav ul {
-  list-style: none;
-}
-
-.sidebar-nav li {
-  padding: 12px 15px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-}
-
-.sidebar-nav li span {
-  display: none;
-}
-
-.sidebar:hover .sidebar-nav li span {
-  display: inline;
-}
-
-.sidebar-nav li:hover {
-  background: rgba(0, 191, 255, 0.1);
-}
-
-.sidebar-nav li.active {
-  background: rgba(0, 191, 255, 0.2);
-  border-left: 3px solid var(--primary);
-}
-
-.sidebar-nav li i {
-  font-size: 1.2rem;
-  min-width: 24px;
+  border-bottom: 1px solid rgba(0, 191, 255, 0.1);
   text-align: center;
+}
+
+.header-logo {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.header-logo .highlight {
+  color: var(--primary);
 }
 
 .main-content {
   flex: 1;
   padding: 20px;
-  margin-left: 70px;
-  transition: margin-left 0.3s ease;
-}
-
-.sidebar:hover ~ .main-content {
-  margin-left: 200px;
+  overflow-y: auto;
 }
 
 .content-section {
   display: none;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .content-section.active {
@@ -247,12 +197,14 @@ body {
 .loading-spinner {
   text-align: center;
   padding: 40px;
+  color: var(--primary);
 }
 
 .nation-data {
   background: rgba(0, 0, 0, 0.3);
   border-radius: 8px;
   padding: 20px;
+  border: 1px solid rgba(0, 191, 255, 0.1);
 }
 
 .nation-header {
@@ -266,6 +218,7 @@ body {
   width: 100px;
   height: auto;
   border: 2px solid var(--primary);
+  border-radius: 5px;
 }
 
 .nation-stats-grid {
@@ -321,11 +274,19 @@ body {
   margin-top: 10px;
 }
 
+.empty-state {
+  text-align: center;
+  padding: 30px;
+  color: var(--gray);
+}
+
 /* Econ Section Styles */
 .econ-tabs {
   display: flex;
   gap: 10px;
   margin-bottom: 20px;
+  overflow-x: auto;
+  padding-bottom: 5px;
 }
 
 .tab-btn {
@@ -335,6 +296,7 @@ body {
   border-radius: 5px;
   color: var(--light);
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .tab-btn.active {
@@ -360,7 +322,7 @@ body {
 /* Chat Section Styles */
 .chat-container {
   margin-top: 20px;
-  height: 70vh;
+  height: calc(100vh - 200px);
   display: flex;
   flex-direction: column;
 }
@@ -407,6 +369,42 @@ body {
   cursor: pointer;
 }
 
+/* Fixed Bottom Navigation */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  background: var(--darker);
+  border-top: 1px solid rgba(0, 191, 255, 0.1);
+  z-index: 100;
+}
+
+.nav-item {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: var(--gray);
+}
+
+.nav-item i {
+  font-size: 1.5rem;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.nav-item span {
+  font-size: 0.8rem;
+}
+
+.nav-item.active {
+  color: var(--primary);
+  border-top: 2px solid var(--primary);
+}
+
 /* Modal Styles */
 .modal {
   position: fixed;
@@ -440,33 +438,36 @@ body {
 
 /* Responsive Styles */
 @media (max-width: 768px) {
-  .dashboard-container {
-    flex-direction: column;
-  }
-  
-  .sidebar {
-    width: 100%;
-    height: auto;
-    display: flex;
+  .dashboard-header {
     padding: 10px;
   }
   
-  .sidebar-nav ul {
-    display: flex;
-    width: 100%;
-    justify-content: space-around;
-  }
-  
-  .sidebar-nav li span {
-    display: none !important;
+  .header-logo {
+    font-size: 1.2rem;
   }
   
   .main-content {
-    margin-left: 0;
-    margin-top: 60px;
+    padding: 15px;
   }
   
-  .sidebar:hover {
-    width: 100%;
+  .nation-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .nation-stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .bottom-nav {
+    padding: 5px 0;
+  }
+  
+  .nav-item span {
+    font-size: 0.7rem;
+  }
+  
+  .chat-container {
+    height: calc(100vh - 180px);
   }
 }
