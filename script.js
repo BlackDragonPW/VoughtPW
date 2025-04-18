@@ -25,77 +25,52 @@ const errorMessage = document.getElementById('errorMessage');
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   
-  const email = emailInput.value;
+  const email = emailInput.value.trim();
   const password = passwordInput.value;
-  const nationId = nationIdInput.value;
-  
-  // Clear previous messages
-  errorMessage.textContent = '';
-  errorMessage.style.color = 'var(--primary)';
-  errorMessage.textContent = 'Verifying credentials...';
-  
+  const nationId = Number(nationIdInput.value);
+
   try {
     // Show loading state
     const loginBtn = loginForm.querySelector('button');
     loginBtn.disabled = true;
-    loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROCESSING';
+    loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> VERIFYING';
+
+    // 1. Authenticate with Firebase Auth
+    const userCredential = await auth.signInWithEmailAndPassword(email, password);
     
-    // Check Firestore for approved user
+    // 2. Verify approval status in Firestore
     const userDoc = await db.collection('approvedUsers').doc(email).get();
     
     if (!userDoc.exists) {
-      showError('Account not found. Contact admin for access.');
-      return;
+      await auth.signOut();
+      throw new Error('Account not approved. Contact your alliance admin.');
     }
     
-    const userData = userDoc.data();
-    if (userData.nationId !== Number(nationId)) {
-      showError('Nation ID does not match our records');
-      return;
+    // 3. Verify Nation ID match
+    if (userDoc.data().nationId !== nationId) {
+      await auth.signOut();
+      throw new Error('Nation ID does not match our records');
     }
     
-    // Sign in with Firebase Auth
-    await auth.signInWithEmailAndPassword(email, password);
-    
-    // Update status message
-    errorMessage.style.color = 'var(--primary)';
-    errorMessage.textContent = 'Login successful! Redirecting...';
-    
-    // Redirect to dashboard
-    setTimeout(() => {
-      window.location.href = 'dashboard.html';
-    }, 1500);
+    // Login successful - redirect
+    window.location.href = 'dashboard.html';
     
   } catch (error) {
     console.error('Login error:', error);
-    handleAuthError(error);
-  } finally {
-    // Reset button state
+    
+    // User-friendly error messages
+    let message = 'Login failed. Please try again.';
+    if (error.code === 'auth/user-not-found') message = 'Account not found';
+    if (error.code === 'auth/wrong-password') message = 'Incorrect password';
+    if (error.message.includes('not approved')) message = error.message;
+    if (error.message.includes('Nation ID')) message = error.message;
+    
+    errorMessage.textContent = message;
+    errorMessage.style.color = 'var(--secondary)';
+    
+    // Reset button
     const loginBtn = loginForm.querySelector('button');
     loginBtn.disabled = false;
     loginBtn.innerHTML = '<span class="btn-text">ACCESS SYSTEM</span> <i class="fas fa-arrow-right btn-icon"></i>';
   }
 });
-
-function handleAuthError(error) {
-  let errorMsg = 'Authentication failed';
-  switch (error.code) {
-    case 'auth/user-not-found':
-      errorMsg = 'Email not registered';
-      break;
-    case 'auth/wrong-password':
-      errorMsg = 'Incorrect password';
-      break;
-    case 'auth/too-many-requests':
-      errorMsg = 'Too many attempts. Try again later.';
-      break;
-    default:
-      errorMsg = error.message || 'Login failed. Please try again.';
-  }
-  showError(errorMsg);
-}
-
-function showError(message) {
-  errorMessage.style.color = 'var(--secondary)';
-  errorMessage.textContent = message;
-}
