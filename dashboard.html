@@ -4,137 +4,132 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vought International - Dashboard</title>
-  <link rel="stylesheet" href="styles.css">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="dashboard-container">
+  <div class="dashboard">
     <!-- Header -->
     <header class="dashboard-header">
-      <div class="header-logo">
+      <div class="logo">
         <span>VOUGHT</span>
         <span class="highlight">INTERNATIONAL</span>
+      </div>
+      <div class="user-menu">
+        <img src="https://via.placeholder.com/40" alt="Profile" class="profile-pic">
+        <span id="username">Loading...</span>
       </div>
     </header>
 
     <!-- Main Content -->
     <main class="main-content">
-      <!-- Home Section -->
-      <section id="home" class="content-section active">
-        <h2>Nation Overview</h2>
+      <!-- Nation Overview -->
+      <section id="nation" class="content-section active">
+        <div class="section-header">
+          <h2><i class="fas fa-flag"></i> Nation Overview</h2>
+        </div>
         <div class="nation-info">
-          <div class="loading-spinner">
+          <div class="loading">
             <i class="fas fa-spinner fa-spin"></i> Loading nation data...
           </div>
-          <div class="nation-data hidden"></div>
+          <div class="nation-data"></div>
         </div>
       </section>
 
-      <!-- Announcements Section -->
-      <section id="announcements" class="content-section hidden">
+      <!-- Announcements -->
+      <section id="announcements" class="content-section">
         <div class="section-header">
-          <h2>Announcements</h2>
-          <button id="newAnnouncementBtn" class="btn-admin hidden">
+          <h2><i class="fas fa-bullhorn"></i> Announcements</h2>
+          <button id="newAnnouncementBtn" class="btn-admin">
             <i class="fas fa-plus"></i> New Announcement
           </button>
         </div>
         <div class="announcements-list"></div>
       </section>
 
-      <!-- Econ Section -->
-      <section id="econ" class="content-section hidden">
-        <div class="econ-tabs">
-          <button class="tab-btn active" data-tab="request">Request Loan</button>
-          <button class="tab-btn admin-only hidden" data-tab="approve">Approve Loans</button>
-          <button class="tab-btn" data-tab="history">Loan History</button>
+      <!-- Chat System -->
+      <section id="chat" class="content-section">
+        <div class="section-header">
+          <h2><i class="fas fa-comments"></i> Alliance Chat</h2>
         </div>
-        
-        <div id="request" class="tab-content active">
-          <h3>Request a Loan</h3>
-          <form id="loanRequestForm">
-            <div class="form-group">
-              <label>Nation ID</label>
-              <input type="number" id="loanNationId" required>
+        <div class="chat-system">
+          <div class="channel-selector">
+            <div class="channel-header">
+              <i class="fas fa-hashtag"></i> Channels
             </div>
-            <div class="form-group">
-              <label>Amount ($)</label>
-              <input type="number" id="loanAmount" required>
+            <ul class="channel-list">
+              <li class="channel-item active" data-channel="global">
+                <i class="fas fa-globe"></i> Global
+              </li>
+              <li class="channel-item" data-channel="support">
+                <i class="fas fa-headset"></i> Support
+              </li>
+            </ul>
+          </div>
+          <div class="chat-area">
+            <div class="chat-header">
+              <i class="fas fa-globe"></i> Global Chat
             </div>
-            <button type="submit" class="btn-primary">Submit Request</button>
-          </form>
-        </div>
-        
-        <div id="approve" class="tab-content hidden">
-          <h3>Pending Loan Requests</h3>
-          <div class="loan-requests-list"></div>
-        </div>
-        
-        <div id="history" class="tab-content hidden">
-          <h3>Loan History</h3>
-          <div class="loan-history-list"></div>
+            <div class="chat-messages"></div>
+            <div class="chat-input">
+              <input type="text" placeholder="Type your message...">
+              <button class="send-btn">
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
         </div>
       </section>
 
-      <!-- Chat Section -->
-      <section id="chat" class="content-section hidden">
-        <h2>Alliance Chat</h2>
-        <div class="chat-container">
-          <div class="chat-messages"></div>
-          <form id="chatForm" class="chat-input">
-            <input type="text" id="chatMessage" placeholder="Type your message..." required>
-            <button type="submit"><i class="fas fa-paper-plane"></i></button>
-          </form>
+      <!-- Profile -->
+      <section id="profile" class="content-section">
+        <div class="section-header">
+          <h2><i class="fas fa-user"></i> Your Profile</h2>
         </div>
-      </section>
-
-      <!-- Profile Section -->
-      <section id="profile" class="content-section hidden">
-        <h2>Your Profile</h2>
         <div class="profile-info">
-          <div class="info-item">
-            <label>Email:</label>
-            <span id="profileEmail"></span>
-          </div>
-          <div class="info-item">
-            <label>Nation ID:</label>
-            <span id="profileNationId"></span>
-          </div>
-          <div class="info-item">
-            <label>Account Type:</label>
-            <span id="profileRole"></span>
+          <div class="info-card">
+            <h3>Account Details</h3>
+            <div class="info-item">
+              <label>Email:</label>
+              <span id="profileEmail">loading...</span>
+            </div>
+            <div class="info-item">
+              <label>Nation ID:</label>
+              <span id="profileNationId">loading...</span>
+            </div>
+            <div class="info-item">
+              <label>Account Type:</label>
+              <span id="profileRole">loading...</span>
+            </div>
           </div>
         </div>
       </section>
     </main>
 
-    <!-- Fixed Bottom Navigation -->
+    <!-- Navigation -->
     <nav class="bottom-nav">
-      <div class="nav-item active" data-section="home">
-        <i class="fas fa-home"></i>
-        <span>Home</span>
-      </div>
-      <div class="nav-item" data-section="announcements">
+      <a href="#nation" class="nav-item active">
+        <i class="fas fa-flag"></i>
+        <span>Nation</span>
+      </a>
+      <a href="#announcements" class="nav-item">
         <i class="fas fa-bullhorn"></i>
-        <span>Announcements</span>
-      </div>
-      <div class="nav-item" data-section="econ">
-        <i class="fas fa-coins"></i>
-        <span>Econ</span>
-      </div>
-      <div class="nav-item" data-section="chat">
+        <span>Announce</span>
+      </a>
+      <a href="#chat" class="nav-item">
         <i class="fas fa-comments"></i>
         <span>Chat</span>
-      </div>
-      <div class="nav-item" data-section="profile">
+      </a>
+      <a href="#profile" class="nav-item">
         <i class="fas fa-user"></i>
         <span>Profile</span>
-      </div>
+      </a>
     </nav>
   </div>
 
   <!-- New Announcement Modal -->
-  <div id="announcementModal" class="modal hidden">
+  <div id="announcementModal" class="modal">
     <div class="modal-content">
       <span class="close-modal">&times;</span>
       <h3>Create New Announcement</h3>
@@ -152,7 +147,9 @@
             <input type="checkbox" id="announcementPin"> Pin this announcement
           </label>
         </div>
-        <button type="submit" class="btn-primary">Post Announcement</button>
+        <button type="submit" class="btn-primary">
+          <i class="fas fa-paper-plane"></i> Post Announcement
+        </button>
       </form>
     </div>
   </div>
