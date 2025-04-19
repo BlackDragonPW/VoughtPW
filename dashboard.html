@@ -25,7 +25,7 @@
     <!-- Main Content -->
     <main class="main-content">
       <!-- Nation Overview -->
-      <section id="nation" class="content-section">
+      <section id="nation" class="content-section" style="display: block;">
         <div class="section-header">
           <h2><i class="fas fa-flag"></i> Nation Overview</h2>
         </div>
@@ -33,23 +33,27 @@
           <div class="loading">
             <i class="fas fa-spinner fa-spin"></i> Loading nation data...
           </div>
-          <div class="nation-data hidden"></div>
+          <div class="nation-data" style="display: none;">
+            <!-- Nation data will be loaded here -->
+          </div>
         </div>
       </section>
 
       <!-- Announcements -->
-      <section id="announcements" class="content-section hidden">
+      <section id="announcements" class="content-section" style="display: none;">
         <div class="section-header">
           <h2><i class="fas fa-bullhorn"></i> Announcements</h2>
-          <button id="newAnnouncementBtn" class="btn-admin hidden">
+          <button id="newAnnouncementBtn" class="btn-admin">
             <i class="fas fa-plus"></i> New Announcement
           </button>
         </div>
-        <div class="announcements-list"></div>
+        <div class="announcements-list">
+          <!-- Announcements will be loaded here -->
+        </div>
       </section>
 
       <!-- Chat System -->
-      <section id="chat" class="content-section hidden">
+      <section id="chat" class="content-section" style="display: none;">
         <div class="section-header">
           <h2><i class="fas fa-comments"></i> Alliance Chat</h2>
         </div>
@@ -71,19 +75,23 @@
             <div class="chat-header">
               <i class="fas fa-globe"></i> Global Chat
             </div>
-            <div class="chat-messages"></div>
+            <div class="chat-messages">
+              <!-- Chat messages will appear here -->
+            </div>
             <div class="chat-input">
-              <input type="text" placeholder="Type your message...">
-              <button class="send-btn">
-                <i class="fas fa-paper-plane"></i>
-              </button>
+              <form>
+                <input type="text" placeholder="Type your message...">
+                <button type="submit" class="send-btn">
+                  <i class="fas fa-paper-plane"></i>
+                </button>
+              </form>
             </div>
           </div>
         </div>
       </section>
 
       <!-- Profile -->
-      <section id="profile" class="content-section hidden">
+      <section id="profile" class="content-section" style="display: none;">
         <div class="section-header">
           <h2><i class="fas fa-user"></i> Your Profile</h2>
         </div>
@@ -129,7 +137,7 @@
   </div>
 
   <!-- New Announcement Modal -->
-  <div id="announcementModal" class="modal hidden">
+  <div id="announcementModal" class="modal" style="display: none;">
     <div class="modal-content">
       <span class="close-modal">&times;</span>
       <h3>Create New Announcement</h3>
