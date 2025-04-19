@@ -4,59 +4,57 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vought International - Login</title>
-  <link rel="stylesheet" href="styles.css">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="login-overlay active">
-    <div class="login-container">
-      <div class="login-header">
-        <div class="login-logo">
-          <span>VOUGHT</span>
-          <span class="highlight">INTERNATIONAL</span>
-        </div>
-        <h2>Secure Access Portal</h2>
-        <p class="login-subtitle">Politics and War Alliance System</p>
+  <div class="login-container">
+    <div class="login-header">
+      <div class="logo">
+        <span>VOUGHT</span>
+        <span class="highlight">INTERNATIONAL</span>
+      </div>
+      <h2>Secure Access Portal</h2>
+      <p class="subtitle">Politics and War Alliance System</p>
+    </div>
+
+    <form id="loginForm" class="login-form">
+      <div class="form-group">
+        <label for="email">Official Email</label>
+        <input type="email" id="email" required placeholder="your@vought.com">
+        <i class="fas fa-envelope"></i>
       </div>
       
-      <form id="loginForm" class="login-form">
-        <div class="form-group">
-          <label for="email">Official Email</label>
-          <input type="email" id="email" name="email" required placeholder="your@vought.com">
-          <i class="fas fa-envelope input-icon"></i>
-        </div>
-        
-        <div class="form-group">
-          <label for="password">Password</label>
-          <input type="password" id="password" name="password" required placeholder="••••••••">
-          <i class="fas fa-lock input-icon"></i>
-        </div>
-        
-        <div class="form-group">
-          <label for="nationId">Politics and War Nation ID</label>
-          <input type="number" id="nationId" name="nationId" required placeholder="123456">
-          <small class="input-hint">Find your ID in your nation's URL: politicsandwar.com/nation/id=XXXXXX</small>
-        </div>
-        
-        <div class="form-group remember-me">
-          <input type="checkbox" id="rememberMe" name="rememberMe">
-          <label for="rememberMe">Remember me</label>
-        </div>
-        
-        <button type="submit" class="login-btn">
-          <span class="btn-text">ACCESS SYSTEM</span>
-          <i class="fas fa-arrow-right btn-icon"></i>
-        </button>
-        
-        <div class="login-footer">
-          <p class="error-message" id="errorMessage"></p>
-          <p class="security-notice">
-            <i class="fas fa-shield-alt"></i> Restricted to approved members only
-          </p>
-        </div>
-      </form>
-    </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" required placeholder="••••••••">
+        <i class="fas fa-lock"></i>
+      </div>
+      
+      <div class="form-group">
+        <label for="nationId">Nation ID</label>
+        <input type="number" id="nationId" required placeholder="123456">
+        <small>Find in your nation URL: politicsandwar.com/nation/id=XXXXXX</small>
+      </div>
+      
+      <div class="remember-me">
+        <input type="checkbox" id="rememberMe">
+        <label for="rememberMe">Remember me</label>
+      </div>
+      
+      <button type="submit" class="login-btn">
+        <span>ACCESS SYSTEM</span>
+        <i class="fas fa-arrow-right"></i>
+      </button>
+      
+      <div class="login-footer">
+        <p id="errorMessage" class="error"></p>
+        <p class="security-notice">
+          <i class="fas fa-shield-alt"></i> Restricted to approved members
+        </p>
+      </div>
+    </form>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
