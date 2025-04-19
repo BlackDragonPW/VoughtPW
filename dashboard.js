@@ -54,7 +54,7 @@ auth.onAuthStateChanged(async (user) => {
     // Show admin controls if admin
     if (isAdmin) {
       document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
-      newAnnouncementBtn.classList.remove('hidden');
+      document.getElementById('newAnnouncementBtn').classList.remove('hidden');
     }
 
     // Load initial section
@@ -509,9 +509,17 @@ function loadProfile() {
     .then(doc => {
       if (doc.exists) {
         const userData = doc.data();
-        profileNationId.textContent = userData.nationId;
+        profileNationId.textContent = userData.nationId || 'Not set';
         profileRole.textContent = userData.role === 'admin' ? 'Admin' : 'Member';
+        
+        // Show the profile section content
+        document.querySelector('.profile-info').classList.remove('hidden');
       }
+    })
+    .catch(error => {
+      console.error('Error loading profile:', error);
+      profileNationId.textContent = 'Error loading data';
+      profileRole.textContent = 'Error loading data';
     });
 }
 
@@ -542,4 +550,4 @@ function setupRealTimeListeners() {
       .where('status', '==', 'pending')
       .onSnapshot(() => loadLoanRequests());
   }
-}
+          }
