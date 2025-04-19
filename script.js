@@ -28,7 +28,7 @@ loginForm.addEventListener('submit', async (e) => {
   
   const email = emailInput.value.trim();
   const password = passwordInput.value;
-  const nationId = nationIdInput.value;
+  const nationId = nationIdInput.value; // This is a string
 
   try {
     // Show loading state
@@ -54,10 +54,11 @@ loginForm.addEventListener('submit', async (e) => {
       throw new Error('Account not approved');
     }
     
-    // Verify nation ID
-    if (userDoc.data().nationId !== nationId) {
+    // Verify nation ID - FIXED COMPARISON
+    const storedNationId = userDoc.data().nationId;
+    if (Number(nationId) !== storedNationId) { // Convert to number before comparison
       await auth.signOut();
-      throw new Error('Nation ID mismatch');
+      throw new Error('Nation ID does not match our records');
     }
     
     // Redirect to dashboard
