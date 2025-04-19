@@ -25,7 +25,7 @@
     <!-- Main Content -->
     <main class="main-content">
       <!-- Nation Overview -->
-      <section id="nation" class="content-section active">
+      <section id="nation" class="content-section">
         <div class="section-header">
           <h2><i class="fas fa-flag"></i> Nation Overview</h2>
         </div>
@@ -33,15 +33,15 @@
           <div class="loading">
             <i class="fas fa-spinner fa-spin"></i> Loading nation data...
           </div>
-          <div class="nation-data"></div>
+          <div class="nation-data hidden"></div>
         </div>
       </section>
 
       <!-- Announcements -->
-      <section id="announcements" class="content-section">
+      <section id="announcements" class="content-section hidden">
         <div class="section-header">
           <h2><i class="fas fa-bullhorn"></i> Announcements</h2>
-          <button id="newAnnouncementBtn" class="btn-admin">
+          <button id="newAnnouncementBtn" class="btn-admin hidden">
             <i class="fas fa-plus"></i> New Announcement
           </button>
         </div>
@@ -49,7 +49,7 @@
       </section>
 
       <!-- Chat System -->
-      <section id="chat" class="content-section">
+      <section id="chat" class="content-section hidden">
         <div class="section-header">
           <h2><i class="fas fa-comments"></i> Alliance Chat</h2>
         </div>
@@ -83,7 +83,7 @@
       </section>
 
       <!-- Profile -->
-      <section id="profile" class="content-section">
+      <section id="profile" class="content-section hidden">
         <div class="section-header">
           <h2><i class="fas fa-user"></i> Your Profile</h2>
         </div>
@@ -129,7 +129,7 @@
   </div>
 
   <!-- New Announcement Modal -->
-  <div id="announcementModal" class="modal">
+  <div id="announcementModal" class="modal hidden">
     <div class="modal-content">
       <span class="close-modal">&times;</span>
       <h3>Create New Announcement</h3>
