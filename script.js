@@ -129,3 +129,18 @@ function handleLoginError(error) {
   
   showError(message);
 }
+
+// Check if dashboard exists before redirecting
+async function checkDashboardExists() {
+  try {
+    const response = await fetch('dashboard.html', { method: 'HEAD' });
+    if (!response.ok) {
+      throw new Error('Dashboard page not found');
+    }
+  } catch (error) {
+    console.error('Dashboard check failed:', error);
+    showError('System error. Please contact admin.');
+    return false;
+  }
+  return true;
+}
