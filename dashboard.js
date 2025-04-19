@@ -32,6 +32,7 @@ const profileRole = document.getElementById('profileRole');
 let currentUser = null;
 let isAdmin = false;
 let currentChannel = 'global';
+const PNW_API_KEY = '7d58ca300d0ac2f7b373'; // Your PnW API key
 
 // Initialize the dashboard
 auth.onAuthStateChanged(async (user) => {
@@ -125,37 +126,110 @@ async function loadNationData(nationId) {
   nationDataEl.classList.add('hidden');
   
   try {
-    // Fetch nation data from PnW API
-    const response = await fetch(`https://politicsandwar.com/api/nation/id=${nationId}&key=example`);
-    const data = await response.json();
+    const response = await fetch(`https://api.politicsandwar.com/graphql?api_key=${PNW_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: `
+          query GetCompleteNationInfo {
+            nations(id: ${nationId}) {
+              data {
+                nation_name
+                leader_name
+                flag
+                color
+                continent
+                num_cities
+                population
+                score
+                war_policy
+                domestic_policy
+                alliance {
+                  name
+                }
+                soldiers
+                tanks
+                aircraft
+                ships
+                missiles
+                nukes
+                spies
+                cities {
+                  name
+                  infrastructure
+                  land
+                  powered
+                }
+                treasures {
+                  name
+                  bonus
+                }
+              }
+            }
+          }
+        `
+      })
+    });
+
+    const result = await response.json();
     
-    if (!data.success) {
-      throw new Error(data.general_message || 'Failed to fetch nation data');
+    if (!result.data || !result.data.nations || !result.data.nations.data) {
+      throw new Error('Invalid data structure from API');
     }
+
+    const nation = result.data.nations.data[0];
     
-    const nation = data.nation;
+    // Format cities information
+    const citiesList = nation.cities.map(city => `
+      <div class="city-item">
+        <strong>${city.name}</strong> - 
+        Infrastructure: ${city.infrastructure.toLocaleString()}, 
+        Land: ${city.land.toLocaleString()}
+        ${city.powered ? '⚡' : ''}
+      </div>
+    `).join('');
+
+    // Format treasures information
+    const treasuresList = nation.treasures.map(treasure => `
+      <div class="treasure-item">
+        <strong>${treasure.name}</strong> - ${treasure.bonus}
+      </div>
+    `).join('');
+
     nationDataEl.innerHTML = `
       <div class="stat-card">
         <h3>Nation Overview</h3>
         <p><strong>Nation Name:</strong> ${nation.nation_name}</p>
         <p><strong>Leader:</strong> ${nation.leader_name}</p>
+        <p><strong>Alliance:</strong> ${nation.alliance?.name || 'None'}</p>
         <p><strong>Score:</strong> ${nation.score.toLocaleString()}</p>
-        <p><strong>Cities:</strong> ${nation.cities}</p>
-        <p><strong>Alliance:</strong> ${nation.alliance || 'None'}</p>
+        <p><strong>Cities:</strong> ${nation.num_cities}</p>
+        <p><strong>Population:</strong> ${nation.population.toLocaleString()}</p>
+        <p><strong>Continent:</strong> ${nation.continent}</p>
+        <p><strong>Color:</strong> ${nation.color}</p>
       </div>
       <div class="stat-card">
-        <h3>Resources</h3>
-        <p><strong>Money:</strong> $${nation.money.toLocaleString()}</p>
-        <p><strong>Food:</strong> ${nation.food.toLocaleString()}</p>
-        <p><strong>Coal:</strong> ${nation.coal.toLocaleString()}</p>
-        <p><strong>Oil:</strong> ${nation.oil.toLocaleString()}</p>
-      </div>
-      <div class="stat-card">
-        <h3>Military</h3>
+        <h3>Military Strength</h3>
         <p><strong>Soldiers:</strong> ${nation.soldiers.toLocaleString()}</p>
         <p><strong>Tanks:</strong> ${nation.tanks.toLocaleString()}</p>
         <p><strong>Aircraft:</strong> ${nation.aircraft.toLocaleString()}</p>
         <p><strong>Ships:</strong> ${nation.ships.toLocaleString()}</p>
+        <p><strong>Missiles:</strong> ${nation.missiles.toLocaleString()}</p>
+        <p><strong>Nukes:</strong> ${nation.nukes.toLocaleString()}</p>
+        <p><strong>Spies:</strong> ${nation.spies.toLocaleString()}</p>
+      </div>
+      <div class="stat-card">
+        <h3>Policies</h3>
+        <p><strong>War Policy:</strong> ${nation.war_policy}</p>
+        <p><strong>Domestic Policy:</strong> ${nation.domestic_policy}</p>
+      </div>
+      <div class="stat-card">
+        <h3>Cities</h3>
+        ${citiesList || '<p>No city data available</p>'}
+      </div>
+      <div class="stat-card">
+        <h3>Treasures</h3>
+        ${treasuresList || '<p>No treasures owned</p>'}
       </div>
     `;
     
@@ -182,6 +256,7 @@ async function loadNationData(nationId) {
   }
 }
 
+// [Rest of the file remains the same - announcements and chat functions]
 // Announcements System
 function setupAnnouncements() {
   // Modal controls
