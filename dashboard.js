@@ -1,5 +1,14 @@
 // Initialize Firebase (same config as script.js)
-const firebaseConfig = { /* same as above */ };
+const firebaseConfig = {
+  apiKey: "AIzaSyDHrUcv8c6S04STttlQ8Ck02SuXdeM3psw",
+  authDomain: "vought-international-eb8c7.firebaseapp.com",
+  projectId: "vought-international-eb8c7",
+  storageBucket: "vought-international-eb8c7.appspot.com",
+  messagingSenderId: "596496897354",
+  appId: "1:596496897354:web:8605892781e81358fb9db3",
+  measurementId: "G-RL72T75YEV"
+};
+
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
@@ -8,7 +17,7 @@ const db = firebase.firestore();
 const sections = document.querySelectorAll('.content-section');
 const navItems = document.querySelectorAll('.nav-item');
 const newAnnouncementBtn = document.getElementById('newAnnouncementBtn');
-const announcementModal = document.querySelector('.modal');
+const announcementModal = document.getElementById('announcementModal');
 const closeModal = document.querySelector('.close-modal');
 const announcementForm = document.getElementById('announcementForm');
 const chatForm = document.querySelector('.chat-input');
@@ -54,15 +63,12 @@ auth.onAuthStateChanged(async (user) => {
     setupNavigation();
     setupAnnouncements();
     setupChat();
-    loadNationData();
+    loadNationData(userDoc.data().nationId);
     
     // Show admin controls
     if (isAdmin) {
       document.querySelectorAll('.btn-admin').forEach(el => el.classList.remove('hidden'));
     }
-    
-    // Show first section
-    document.querySelector('.content-section').classList.add('active');
     
   } catch (error) {
     console.error('Dashboard error:', error);
@@ -84,9 +90,9 @@ function setupNavigation() {
       // Show corresponding section
       const target = item.getAttribute('href').substring(1);
       sections.forEach(section => {
-        section.classList.remove('active');
+        section.classList.add('hidden');
         if (section.id === target) {
-          section.classList.add('active');
+          section.classList.remove('hidden');
           loadSectionContent(target);
         }
       });
@@ -98,7 +104,8 @@ function setupNavigation() {
 function loadSectionContent(sectionId) {
   switch (sectionId) {
     case 'nation':
-      loadNationData();
+      const nationId = document.getElementById('profileNationId').textContent;
+      loadNationData(nationId);
       break;
     case 'announcements':
       loadAnnouncements();
@@ -110,7 +117,7 @@ function loadSectionContent(sectionId) {
 }
 
 // Nation Data
-async function loadNationData() {
+async function loadNationData(nationId) {
   const nationDataEl = document.querySelector('.nation-data');
   const loadingEl = document.querySelector('.loading');
   
@@ -118,29 +125,58 @@ async function loadNationData() {
   nationDataEl.classList.add('hidden');
   
   try {
-    // Simulate API call - replace with your actual PnW API integration
-    setTimeout(() => {
-      nationDataEl.innerHTML = `
-        <div class="stat-card">
-          <h3>Nation Overview</h3>
-          <p><strong>Nation Name:</strong> Example Nation</p>
-          <p><strong>Score:</strong> 1,234.56</p>
-          <p><strong>Cities:</strong> 5</p>
-        </div>
-        <div class="stat-card">
-          <h3>Military</h3>
-          <p><strong>Soldiers:</strong> 10,000</p>
-          <p><strong>Tanks:</strong> 500</p>
-        </div>
-      `;
-      
-      loadingEl.classList.add('hidden');
-      nationDataEl.classList.remove('hidden');
-    }, 1000);
+    // Fetch nation data from PnW API
+    const response = await fetch(`https://politicsandwar.com/api/nation/id=${nationId}&key=example`);
+    const data = await response.json();
+    
+    if (!data.success) {
+      throw new Error(data.general_message || 'Failed to fetch nation data');
+    }
+    
+    const nation = data.nation;
+    nationDataEl.innerHTML = `
+      <div class="stat-card">
+        <h3>Nation Overview</h3>
+        <p><strong>Nation Name:</strong> ${nation.nation_name}</p>
+        <p><strong>Leader:</strong> ${nation.leader_name}</p>
+        <p><strong>Score:</strong> ${nation.score.toLocaleString()}</p>
+        <p><strong>Cities:</strong> ${nation.cities}</p>
+        <p><strong>Alliance:</strong> ${nation.alliance || 'None'}</p>
+      </div>
+      <div class="stat-card">
+        <h3>Resources</h3>
+        <p><strong>Money:</strong> $${nation.money.toLocaleString()}</p>
+        <p><strong>Food:</strong> ${nation.food.toLocaleString()}</p>
+        <p><strong>Coal:</strong> ${nation.coal.toLocaleString()}</p>
+        <p><strong>Oil:</strong> ${nation.oil.toLocaleString()}</p>
+      </div>
+      <div class="stat-card">
+        <h3>Military</h3>
+        <p><strong>Soldiers:</strong> ${nation.soldiers.toLocaleString()}</p>
+        <p><strong>Tanks:</strong> ${nation.tanks.toLocaleString()}</p>
+        <p><strong>Aircraft:</strong> ${nation.aircraft.toLocaleString()}</p>
+        <p><strong>Ships:</strong> ${nation.ships.toLocaleString()}</p>
+      </div>
+    `;
+    
+    loadingEl.classList.add('hidden');
+    nationDataEl.classList.remove('hidden');
     
   } catch (error) {
     console.error('Nation data error:', error);
-    nationDataEl.innerHTML = '<p class="error">Error loading nation data</p>';
+    nationDataEl.innerHTML = `
+      <div class="stat-card">
+        <h3>Error Loading Data</h3>
+        <p>${error.message}</p>
+        <p>Showing sample data instead</p>
+      </div>
+      <div class="stat-card">
+        <h3>Sample Nation</h3>
+        <p><strong>Nation Name:</strong> Example Nation</p>
+        <p><strong>Score:</strong> 1,234.56</p>
+        <p><strong>Cities:</strong> 5</p>
+      </div>
+    `;
     loadingEl.classList.add('hidden');
     nationDataEl.classList.remove('hidden');
   }
@@ -150,11 +186,11 @@ async function loadNationData() {
 function setupAnnouncements() {
   // Modal controls
   newAnnouncementBtn?.addEventListener('click', () => {
-    announcementModal.classList.add('active');
+    announcementModal.classList.remove('hidden');
   });
   
   closeModal?.addEventListener('click', () => {
-    announcementModal.classList.remove('active');
+    announcementModal.classList.add('hidden');
   });
   
   announcementForm?.addEventListener('submit', async (e) => {
@@ -172,7 +208,7 @@ function setupAnnouncements() {
         isPinned: document.getElementById('announcementPin').checked
       });
       
-      announcementModal.classList.remove('active');
+      announcementModal.classList.add('hidden');
       announcementForm.reset();
       loadAnnouncements();
       
@@ -201,15 +237,16 @@ async function loadAnnouncements() {
     announcementsList.innerHTML = '';
     snapshot.forEach(doc => {
       const data = doc.data();
-      announcementsList.innerHTML += `
-        <div class="announcement-card">
-          <h4>${data.title}</h4>
-          <p>${data.content}</p>
-          <div class="announcement-meta">
-            Posted by ${data.author} • ${new Date(data.createdAt?.toDate()).toLocaleString()}
-          </div>
+      const announcement = document.createElement('div');
+      announcement.className = 'announcement-card';
+      announcement.innerHTML = `
+        <h4>${data.title}</h4>
+        <p>${data.content}</p>
+        <div class="announcement-meta">
+          Posted by ${data.author} • ${new Date(data.createdAt?.toDate()).toLocaleString()}
         </div>
       `;
+      announcementsList.appendChild(announcement);
     });
     
   } catch (error) {
@@ -238,7 +275,7 @@ function setupChat() {
   });
   
   // Message sending
-  chatForm.addEventListener('submit', async (e) => {
+  chatForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const input = chatForm.querySelector('input');
     const message = input.value.trim();
