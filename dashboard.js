@@ -35,592 +35,70 @@ let currentUser = null;
 let userNationId = null;
 let isAdmin = false;
 
-// Initialize the dashboard
+// Initialize the dashboard with enhanced error handling
 auth.onAuthStateChanged(async (user) => {
-  if (!user) {
-    window.location.href = 'index.html';
-    return;
-  }
-
-  currentUser = user;
   try {
+    console.log("Auth state changed. User:", user);
+    
+    if (!user) {
+      console.log("No user, redirecting to login");
+      window.location.href = 'index.html';
+      return;
+    }
+
+    currentUser = user;
+    console.log("Current user email:", user.email);
+
+    // Check if user exists in approvedUsers collection
     const userDoc = await db.collection('approvedUsers').doc(user.email).get();
     
-    if (userDoc.exists) {
-      userNationId = userDoc.data().nationId;
-      isAdmin = userDoc.data().role === 'admin';
-      
-      // Load profile data
-      loadProfile();
-      
-      // Show admin controls if admin
-      if (isAdmin) {
-        document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
-        document.getElementById('newAnnouncementBtn').classList.remove('hidden');
-      }
-
-      // Set up navigation
-      setupNavigation();
-      
-      // Load initial section
-      loadSection('home');
-      
-      // Set up real-time listeners
-      setupAllListeners();
-    } else {
+    if (!userDoc.exists) {
+      console.log("User not approved, signing out");
       await auth.signOut();
-      window.location.href = 'index.html';
+      throw new Error('Account not approved. Contact your alliance admin.');
     }
-  } catch (error) {
-    console.error('Initialization error:', error);
-    alert('Error loading dashboard. Please try again.');
-    await auth.signOut();
-    window.location.href = 'index.html';
-  }
-});
 
-// Set up navigation
-function setupNavigation() {
-  navItems.forEach(item => {
-    item.addEventListener('click', () => {
-      const section = item.getAttribute('data-section');
-      loadSection(section);
-    });
-  });
-}
+    userNationId = userDoc.data().nationId;
+    isAdmin = userDoc.data().role === 'admin';
+    console.log(`User loaded - NationID: ${userNationId}, Admin: ${isAdmin}`);
 
-// Section loading
-function loadSection(sectionName) {
-  // Hide all sections
-  sections.forEach(section => {
-    section.classList.add('hidden');
-    if (section.id === sectionName) {
-      section.classList.remove('hidden');
-    }
-  });
+    // Initialize UI components
+    loadProfile();
+    setupNavigation();
+    loadSection('home');
+    setupAllListeners();
 
-  // Update active nav item
-  navItems.forEach(item => {
-    item.classList.remove('active');
-    if (item.getAttribute('data-section') === sectionName) {
-      item.classList.add('active');
-    }
-  });
-
-  // Load section-specific content
-  switch (sectionName) {
-    case 'home':
-      loadNationData();
-      break;
-    case 'announcements':
-      loadAnnouncements();
-      break;
-    case 'econ':
-      // Activate the first tab by default
-      document.querySelector('.tab-btn[data-tab="request"]').click();
-      loadLoanRequests();
-      loadLoanHistory();
-      break;
-    case 'chat':
-      loadChatMessages();
-      break;
-    case 'profile':
-      // Profile is already loaded
-      break;
-  }
-}
-
-// Nation Data Functions
-async function loadNationData() {
-  const nationDataEl = document.querySelector('.nation-data');
-  const loadingSpinner = document.querySelector('.loading-spinner');
-  
-  nationDataEl.classList.add('hidden');
-  loadingSpinner.classList.remove('hidden');
-  
-  try {
-    const response = await fetch(`https://api.politicsandwar.com/graphql?api_key=${PNW_API_KEY}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        query: `
-          query GetCompleteNationInfo {
-            nations(id: ${userNationId}) {
-              data {
-                nation_name
-                leader_name
-                flag
-                color
-                continent
-                num_cities
-                population
-                score
-                war_policy
-                domestic_policy
-                alliance {
-                  name
-                }
-                soldiers
-                tanks
-                aircraft
-                ships
-                missiles
-                nukes
-                spies
-                cities {
-                  name
-                  infrastructure
-                  land
-                  powered
-                }
-                treasures {
-                  name
-                  bonus
-                }
-              }
-            }
-          }
-        `
-      })
-    });
-
-    const { data } = await response.json();
-    if (data?.nations?.data?.length > 0) {
-      displayNationData(data.nations.data[0]);
-    } else {
-      throw new Error('No nation data found');
-    }
-  } catch (error) {
-    console.error('Error loading nation data:', error);
-    nationDataEl.innerHTML = '<p class="error">Error loading nation data. Please try again later.</p>';
-    loadingSpinner.classList.add('hidden');
-    nationDataEl.classList.remove('hidden');
-  }
-}
-
-function displayNationData(nation) {
-  const nationDataEl = document.querySelector('.nation-data');
-  const loadingSpinner = document.querySelector('.loading-spinner');
-  
-  loadingSpinner.classList.add('hidden');
-  nationDataEl.classList.remove('hidden');
-  
-  nationDataEl.innerHTML = `
-    <div class="stat-card">
-      <div class="nation-header">
-        <img src="${nation.flag}" alt="${nation.nation_name} Flag" class="nation-flag">
-        <div>
-          <h2>${nation.nation_name}</h2>
-          <p>Leader: ${nation.leader_name}</p>
-          <p>Alliance: ${nation.alliance?.name || 'None'}</p>
-          <p>Score: ${nation.score.toLocaleString()}</p>
-        </div>
-      </div>
-    </div>
-    
-    <div class="stat-card">
-      <h3>Military</h3>
-      <p>Soldiers: ${nation.soldiers.toLocaleString()}</p>
-      <p>Tanks: ${nation.tanks.toLocaleString()}</p>
-      <p>Aircraft: ${nation.aircraft.toLocaleString()}</p>
-      <p>Ships: ${nation.ships.toLocaleString()}</p>
-      <p>Missiles: ${nation.missiles.toLocaleString()}</p>
-      <p>Nukes: ${nation.nukes.toLocaleString()}</p>
-      <p>Spies: ${nation.spies.toLocaleString()}</p>
-    </div>
-    
-    <div class="stat-card">
-      <h3>Policies</h3>
-      <p>War Policy: ${nation.war_policy}</p>
-      <p>Domestic Policy: ${nation.domestic_policy}</p>
-      <p>Color: ${nation.color}</p>
-      <p>Continent: ${nation.continent}</p>
-    </div>
-    
-    <div class="stat-card">
-      <h3>Cities (${nation.num_cities})</h3>
-      ${nation.cities.map(city => `
-        <div class="city-card">
-          <h4>${city.name}</h4>
-          <p>Infra: ${city.infrastructure.toLocaleString()}</p>
-          <p>Land: ${city.land.toLocaleString()}</p>
-          <p>Powered: ${city.powered ? 'Yes' : 'No'}</p>
-        </div>
-      `).join('')}
-    </div>
-    
-    ${nation.treasures?.length > 0 ? `
-    <div class="stat-card">
-      <h3>Treasures</h3>
-      ${nation.treasures.map(treasure => `
-        <p>${treasure.name}: ${treasure.bonus}</p>
-      `).join('')}
-    </div>
-    ` : ''}
-  `;
-}
-
-// Announcements Functions
-newAnnouncementBtn?.addEventListener('click', () => {
-  announcementModal.classList.remove('hidden');
-});
-
-closeModal?.addEventListener('click', () => {
-  announcementModal.classList.add('hidden');
-});
-
-announcementForm?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  
-  const title = document.getElementById('announcementTitle').value;
-  const content = document.getElementById('announcementContent').value;
-  const isPinned = document.getElementById('announcementPin').checked;
-  
-  try {
-    await db.collection('announcements').add({
-      title,
-      content,
-      authorEmail: currentUser.email,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      isPinned,
-      isImportant: false
-    });
-    
-    announcementModal.classList.add('hidden');
-    announcementForm.reset();
-    loadAnnouncements();
-  } catch (error) {
-    console.error('Error posting announcement:', error);
-    alert('Failed to post announcement');
-  }
-});
-
-async function loadAnnouncements() {
-  const announcementsList = document.querySelector('.announcements-list');
-  announcementsList.innerHTML = '<p>Loading announcements...</p>';
-  
-  try {
-    const snapshot = await db.collection('announcements')
-      .orderBy('isPinned', 'desc')
-      .orderBy('createdAt', 'desc')
-      .get();
-    
-    if (snapshot.empty) {
-      announcementsList.innerHTML = '<p>No announcements yet.</p>';
-      return;
-    }
-    
-    announcementsList.innerHTML = '';
-    snapshot.forEach(doc => {
-      const announcement = doc.data();
-      const announcementEl = document.createElement('div');
-      announcementEl.className = `announcement-card ${announcement.isPinned ? 'pinned' : ''}`;
-      announcementEl.innerHTML = `
-        <h3>${announcement.title} ${announcement.isPinned ? '📌' : ''}</h3>
-        <p>${announcement.content.replace(/\n/g, '<br>')}</p>
-        <div class="announcement-meta">
-          Posted by ${announcement.authorEmail} on ${new Date(announcement.createdAt?.toDate()).toLocaleString()}
-        </div>
-        ${isAdmin ? `<button class="btn-delete" data-id="${doc.id}">Delete</button>` : ''}
-      `;
-      announcementsList.appendChild(announcementEl);
-    });
-
-    // Add delete event listeners
-    document.querySelectorAll('.btn-delete').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        if (confirm('Are you sure you want to delete this announcement?')) {
-          try {
-            await db.collection('announcements').doc(btn.dataset.id).delete();
-            loadAnnouncements();
-          } catch (error) {
-            console.error('Error deleting announcement:', error);
-            alert('Failed to delete announcement');
-          }
-        }
-      });
-    });
-  } catch (error) {
-    console.error('Error loading announcements:', error);
-    announcementsList.innerHTML = '<p class="error">Error loading announcements.</p>';
-  }
-}
-
-// Econ Functions
-loanRequestForm?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  
-  const amount = parseInt(document.getElementById('loanAmount').value);
-  
-  if (!amount || amount <= 0) {
-    alert('Please enter a valid amount');
-    return;
-  }
-
-  try {
-    await db.collection('loanRequests').add({
-      nationId: userNationId,
-      amount,
-      requesterEmail: currentUser.email,
-      status: 'pending',
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    
-    loanRequestForm.reset();
-    alert('Loan request submitted successfully!');
-    loadLoanRequests();
-  } catch (error) {
-    console.error('Error submitting loan request:', error);
-    alert('Failed to submit loan request');
-  }
-});
-
-async function loadLoanRequests() {
-  const requestsList = document.querySelector('.loan-requests-list');
-  
-  if (!isAdmin) return;
-  
-  requestsList.innerHTML = '<p>Loading loan requests...</p>';
-  
-  try {
-    const snapshot = await db.collection('loanRequests')
-      .where('status', '==', 'pending')
-      .orderBy('createdAt', 'desc')
-      .get();
-    
-    if (snapshot.empty) {
-      requestsList.innerHTML = '<p>No pending loan requests.</p>';
-      return;
-    }
-    
-    requestsList.innerHTML = '';
-    snapshot.forEach(doc => {
-      const request = doc.data();
-      const requestEl = document.createElement('div');
-      requestEl.className = 'loan-request-card';
-      requestEl.innerHTML = `
-        <p><strong>Nation ID:</strong> ${request.nationId}</p>
-        <p><strong>Amount:</strong> $${request.amount.toLocaleString()}</p>
-        <p><strong>Requested by:</strong> ${request.requesterEmail}</p>
-        <p><strong>Date:</strong> ${new Date(request.createdAt?.toDate()).toLocaleString()}</p>
-        <div class="loan-actions">
-          <button class="btn-approve" data-id="${doc.id}">Approve</button>
-          <button class="btn-reject" data-id="${doc.id}">Reject</button>
-        </div>
-      `;
-      requestsList.appendChild(requestEl);
-    });
-    
-    // Add event listeners to action buttons
-    document.querySelectorAll('.btn-approve').forEach(btn => {
-      btn.addEventListener('click', () => processLoanRequest(btn.dataset.id, 'approved'));
-    });
-    
-    document.querySelectorAll('.btn-reject').forEach(btn => {
-      btn.addEventListener('click', () => processLoanRequest(btn.dataset.id, 'rejected'));
-    });
-  } catch (error) {
-    console.error('Error loading loan requests:', error);
-    requestsList.innerHTML = '<p class="error">Error loading loan requests.</p>';
-  }
-}
-
-async function loadLoanHistory() {
-  const historyList = document.querySelector('.loan-history-list');
-  historyList.innerHTML = '<p>Loading loan history...</p>';
-  
-  try {
-    let query;
+    // Show admin controls if admin
     if (isAdmin) {
-      query = db.collection('loanRequests')
-        .where('status', 'in', ['approved', 'rejected'])
-        .orderBy('processedAt', 'desc')
-        .limit(50);
-    } else {
-      query = db.collection('loanRequests')
-        .where('requesterEmail', '==', currentUser.email)
-        .where('status', 'in', ['approved', 'rejected'])
-        .orderBy('processedAt', 'desc')
-        .limit(50);
+      console.log("User is admin, showing admin controls");
+      document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+      document.getElementById('newAnnouncementBtn').classList.remove('hidden');
     }
-    
-    const snapshot = await query.get();
-    
-    if (snapshot.empty) {
-      historyList.innerHTML = '<p>No loan history found.</p>';
-      return;
-    }
-    
-    historyList.innerHTML = '';
-    snapshot.forEach(doc => {
-      const request = doc.data();
-      const requestEl = document.createElement('div');
-      requestEl.className = `loan-request-card ${request.status}`;
-      requestEl.innerHTML = `
-        <p><strong>Status:</strong> <span class="status-${request.status}">${request.status.toUpperCase()}</span></p>
-        <p><strong>Amount:</strong> $${request.amount.toLocaleString()}</p>
-        <p><strong>Date:</strong> ${new Date(request.createdAt?.toDate()).toLocaleString()}</p>
-        ${request.processedAt ? `<p><strong>Processed:</strong> ${new Date(request.processedAt?.toDate()).toLocaleString()}</p>` : ''}
-        ${request.adminNotes ? `<p><strong>Notes:</strong> ${request.adminNotes}</p>` : ''}
-        ${isAdmin ? `<p><strong>Processed by:</strong> ${request.processedBy || 'System'}</p>` : ''}
-      `;
-      historyList.appendChild(requestEl);
-    });
-  } catch (error) {
-    console.error('Error loading loan history:', error);
-    historyList.innerHTML = '<p class="error">Error loading loan history.</p>';
-  }
-}
 
-async function processLoanRequest(requestId, status) {
-  const notes = prompt(`Enter notes for ${status} request:`);
-  if (notes === null) return;
-  
-  try {
-    await db.collection('loanRequests').doc(requestId).update({
-      status,
-      adminNotes: notes,
-      processedAt: firebase.firestore.FieldValue.serverTimestamp(),
-      processedBy: currentUser.email
-    });
-    
-    loadLoanRequests();
-    loadLoanHistory();
   } catch (error) {
-    console.error('Error processing loan request:', error);
-    alert('Failed to process loan request');
-  }
-}
-
-// Chat Functions
-chatForm?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  
-  const messageInput = document.getElementById('chatMessage');
-  const message = messageInput.value.trim();
-  
-  if (!message) return;
-  
-  try {
-    await db.collection('chatMessages').add({
-      senderEmail: currentUser.email,
-      senderNationId: userNationId,
-      content: message,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      isAdmin: isAdmin
-    });
-    
-    messageInput.value = '';
-  } catch (error) {
-    console.error('Error sending message:', error);
-    alert('Failed to send message');
+    console.error('Dashboard initialization error:', error);
+    showDashboardError(error.message || 'Error loading dashboard. Please try again.');
+    setTimeout(() => {
+      auth.signOut();
+      window.location.href = 'index.html';
+    }, 3000);
   }
 });
 
-function loadChatMessages() {
-  const chatContainer = document.querySelector('.chat-messages');
-  chatContainer.innerHTML = '<p>Loading chat messages...</p>';
-  
-  db.collection('chatMessages')
-    .orderBy('createdAt', 'desc')
-    .limit(50)
-    .onSnapshot(snapshot => {
-      if (snapshot.empty) {
-        chatContainer.innerHTML = '<p>No messages yet. Be the first to chat!</p>';
-        return;
-      }
-      
-      chatContainer.innerHTML = '';
-      const messages = [];
-      snapshot.forEach(doc => messages.unshift(doc.data()));
-      
-      messages.forEach(msg => {
-        const messageEl = document.createElement('div');
-        messageEl.className = `chat-message ${msg.isAdmin ? 'admin' : ''}`;
-        messageEl.innerHTML = `
-          <div class="message-header">
-            <img src="https://politicsandwar.com/img/flags/${msg.senderNationId}.png" class="nation-flag-small">
-            <strong>${msg.senderEmail}</strong>
-            <span class="message-time">${new Date(msg.createdAt?.toDate()).toLocaleTimeString()}</span>
-          </div>
-          <p>${msg.content}</p>
-        `;
-        chatContainer.appendChild(messageEl);
-      });
-      
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-    }, error => {
-      console.error('Error loading chat messages:', error);
-      chatContainer.innerHTML = '<p class="error">Error loading chat messages.</p>';
-    });
+function showDashboardError(message) {
+  const loadingSpinner = document.querySelector('.loading-spinner');
+  if (loadingSpinner) loadingSpinner.classList.add('hidden');
+
+  const errorDiv = document.createElement('div');
+  errorDiv.className = 'dashboard-error';
+  errorDiv.innerHTML = `
+    <div class="error-content">
+      <h3>Error Loading Dashboard</h3>
+      <p>${message}</p>
+      <p>You will be redirected to login page shortly...</p>
+    </div>
+  `;
+  document.body.appendChild(errorDiv);
 }
 
-// Profile Functions
-function loadProfile() {
-  profileEmail.textContent = currentUser.email;
-  profilePassword.textContent = '••••••••'; // Masked password
-  
-  db.collection('approvedUsers').doc(currentUser.email).get()
-    .then(doc => {
-      if (doc.exists) {
-        const userData = doc.data();
-        profileNationId.textContent = userData.nationId;
-        profileRole.textContent = userData.role === 'admin' ? 'Admin' : 'Member';
-      }
-    })
-    .catch(error => {
-      console.error('Error loading profile:', error);
-      profileNationId.textContent = 'Error loading';
-      profileRole.textContent = 'Error loading';
-    });
-}
-
-// Tab switching
-econTabs.forEach(tab => {
-  tab.addEventListener('click', () => {
-    econTabs.forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    
-    tabContents.forEach(content => content.classList.add('hidden'));
-    document.getElementById(tab.dataset.tab).classList.remove('hidden');
-    
-    // Reload content when switching tabs
-    if (tab.dataset.tab === 'approve') {
-      loadLoanRequests();
-    } else if (tab.dataset.tab === 'history') {
-      loadLoanHistory();
-    }
-  });
-});
-
-// Set up all real-time listeners
-function setupAllListeners() {
-  // Chat messages
-  loadChatMessages();
-  
-  // Announcements
-  db.collection('announcements')
-    .orderBy('isPinned', 'desc')
-    .orderBy('createdAt', 'desc')
-    .onSnapshot(() => loadAnnouncements());
-  
-  // Loan requests (admin only)
-  if (isAdmin) {
-    db.collection('loanRequests')
-      .where('status', '==', 'pending')
-      .orderBy('createdAt', 'desc')
-      .onSnapshot(() => loadLoanRequests());
-  }
-  
-  // Loan history
-  const loanHistoryQuery = isAdmin 
-    ? db.collection('loanRequests')
-        .where('status', 'in', ['approved', 'rejected'])
-        .orderBy('processedAt', 'desc')
-    : db.collection('loanRequests')
-        .where('requesterEmail', '==', currentUser.email)
-        .where('status', 'in', ['approved', 'rejected'])
-        .orderBy('processedAt', 'desc');
-  
-  loanHistoryQuery.onSnapshot(() => loadLoanHistory());
-}
+// ... [Rest of your existing dashboard.js code remains the same]
